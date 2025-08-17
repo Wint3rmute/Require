@@ -12,6 +12,7 @@ Require is a system modeling and requirements tracing application built with Nex
 - **Build**: `npm run build`
 - **Production start**: `npm start`
 - **Lint**: `npm run lint`
+- **Test**: `npm test` (Jest with React Testing Library)
 
 **IMPORTANT**: Always run `npm run lint` and `npm run build` to verify changes before considering work complete.
 
@@ -23,6 +24,7 @@ Require is a system modeling and requirements tracing application built with Nex
 - **Diagram Engine**: ReactFlow (@xyflow/react) for interactive system diagrams
 - **Styling**: CSS Modules + Material-UI components
 - **TypeScript**: Strict mode enabled with enhanced compiler checks
+- **Testing**: Jest + React Testing Library + jsdom environment
 
 ### Project Structure
 - `src/app/` - Next.js App Router pages and layouts
@@ -30,10 +32,12 @@ Require is a system modeling and requirements tracing application built with Nex
   - `page.tsx` - Home page with ReactFlow interactive demo
   - `subsystems/page.tsx` - Subsystems management page with list view
   - `interfaces/page.tsx` - Interfaces management page with list view
+  - `__tests__/` - Page-level tests
 - `src/components/` - Reusable React components
   - `navbar.tsx` - Material-UI app bar with navigation links (Home, Subsystems, Interfaces, Login)
   - `subsystems_list.tsx` - Displays system components (Engine, Processing, Tires, etc.) with icons
   - `interfaces_list.tsx` - Displays communication interfaces (UART, CAN, USB-C, etc.) with icons
+  - `__tests__/` - Component tests with 100% coverage
 
 ### Key Dependencies
 - `@xyflow/react` - Interactive node-based diagrams with proper TypeScript types
@@ -41,6 +45,14 @@ Require is a system modeling and requirements tracing application built with Nex
 - `@mui/icons-material` - Material Design icons (Build, Computer, USB, etc.)
 - `@emotion/react` & `@emotion/styled` - CSS-in-JS styling
 - `next` - Full-stack React framework with typed routes
+
+### Development Dependencies
+- `jest` - JavaScript testing framework
+- `@testing-library/react` - React component testing utilities
+- `@testing-library/jest-dom` - Custom Jest matchers for DOM testing
+- `jest-environment-jsdom` - DOM environment for Jest
+- `ts-jest` - TypeScript transformer for Jest
+- `identity-obj-proxy` - CSS modules mocking for tests
 
 ### TypeScript Configuration
 - **Path mapping**: `@/*` maps to `./src/*`
@@ -90,3 +102,40 @@ Each item has `id`, `name`, `description`, and `icon` properties with appropriat
 - Strict TypeScript checking catches potential runtime errors
 - All imports must be used (enforced by compiler)
 - Consistent file naming and casing enforced
+
+## Testing Strategy
+
+### Jest Configuration
+- **Environment**: jsdom for DOM testing
+- **TypeScript Support**: ts-jest transformer with React JSX support
+- **Module Mapping**: `@/*` aliases and CSS module mocking
+- **Coverage**: 100% statement, branch, function, and line coverage required
+- **Setup**: Global jest-dom matchers configured
+
+### Test Patterns
+- **Component Tests**: Focus on user-facing behavior, not implementation details
+- **Rendering Tests**: Verify components render without errors
+- **Content Tests**: Validate expected text, data, and structure appear
+- **Interaction Tests**: Ensure clickable elements work correctly
+- **Accessibility Tests**: Check for proper ARIA roles and labels
+- **Mock Strategy**: Mock external dependencies (Next.js Link, CSS imports)
+
+### Test Organization
+- Tests located in `__tests__/` directories alongside source code
+- Component tests: `src/components/__tests__/`
+- Page tests: `src/app/__tests__/`
+- File naming: `{component}.test.tsx` pattern
+- Describe blocks group related functionality
+
+### Current Test Coverage
+- **SubsystemsList**: 10 subsystems rendering, content validation, icons, interactions
+- **InterfacesList**: 12 interfaces rendering, technical descriptions, icons, interactions  
+- **ButtonAppBar**: Navigation links, proper hrefs, Material-UI structure, accessibility
+- **Pages**: Integration tests verifying page structure and component mounting
+
+### Testing Best Practices
+- Use React Testing Library queries by accessibility (role, label, text)
+- Avoid testing implementation details (CSS classes, internal state)
+- Mock external dependencies at module level
+- Verify user-visible behavior and interactions
+- Test error states and edge cases when applicable
