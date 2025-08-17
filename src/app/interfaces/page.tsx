@@ -1,13 +1,12 @@
 "use client"
 
 import styles from "../page.module.css";
-import '@xyflow/react/dist/style.css';
-import SubsystemsList from "@/components/subsystems_list";
+import InterfacesList from "@/components/interfaces_list";
 
 export default function Page() {
   return <div className={styles.page}>
     <main className={styles.main}>
-      <SubsystemsList />
+      <InterfacesList />
     </main>
   </div>
 }

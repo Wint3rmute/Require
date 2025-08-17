@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Link from 'next/link';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -20,8 +21,16 @@ export default function ButtonAppBar() {
           >
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Require
+            <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+              Require
+            </Link>
           </Typography>
+          <Button color="inherit" component={Link} href="/subsystems">
+            Subsystems
+          </Button>
+          <Button color="inherit" component={Link} href="/interfaces">
+            Interfaces
+          </Button>
           <Button color="inherit">Login</Button>
         </Toolbar>
       </AppBar>
