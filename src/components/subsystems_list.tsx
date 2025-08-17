@@ -27,7 +27,7 @@ export default function SubsystemsList({ subsystems, iconMap, onDelete }: Subsys
   return (
     <Box sx={{ width: '100%', maxWidth: 800, bgcolor: 'background.paper' }}>
       <Typography variant="h4" component="h1" sx={{ mb: 3, textAlign: 'center' }}>
-        System Subsystems
+        Subsystems
       </Typography>
       <List>
         {subsystems.map((subsystem) => (

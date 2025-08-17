@@ -19,7 +19,7 @@ export interface Interface {
   description: string;
   // The icon is now a string identifier instead of a React element.
   // This makes it serializable for localStorage.
-  icon: string; 
+  icon: string;
 }
 
 interface InterfacesListProps {
@@ -33,13 +33,13 @@ export default function InterfacesList({ interfaces, iconMap, onDelete }: Interf
   return (
     <Box sx={{ width: '100%', maxWidth: 800, bgcolor: 'background.paper' }}>
       <Typography variant="h4" component="h1" sx={{ mb: 3, textAlign: 'center' }}>
-        System Interfaces
+        Interfaces
       </Typography>
       <List>
         {interfaces.map((interfaceItem) => (
-          <ListItem 
-            key={interfaceItem.id} 
-            disablePadding 
+          <ListItem
+            key={interfaceItem.id}
+            disablePadding
             sx={{ mb: 1 }}
             secondaryAction={
               <IconButton edge="end" aria-label="delete" onClick={() => onDelete(interfaceItem.id)}>
@@ -51,7 +51,7 @@ export default function InterfacesList({ interfaces, iconMap, onDelete }: Interf
               <ListItemIcon>
                 {iconMap[interfaceItem.icon] || <CableIcon />}
               </ListItemIcon>
-              <ListItemText 
+              <ListItemText
                 primary={interfaceItem.name}
                 secondary={interfaceItem.description}
               />

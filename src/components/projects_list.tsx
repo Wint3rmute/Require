@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
@@ -8,14 +10,15 @@ import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AccountTree from '@mui/icons-material/AccountTree';
 
 import { Project } from '@/generated/prisma';
 
-export function ProjectsList(projects: Project[]) {
+export function ProjectsList({ projects }: { projects: Project[] }) {
   return (
     <Box sx={{ width: '100%', maxWidth: 800, bgcolor: 'background.paper' }}>
       <Typography variant="h4" component="h1" sx={{ mb: 3, textAlign: 'center' }}>
-        System Subsystems
+        Projects
       </Typography>
       <List>
         {projects.map((project) => (
@@ -31,7 +34,7 @@ export function ProjectsList(projects: Project[]) {
           >
             <ListItemButton sx={{ borderRadius: 1, border: '1px solid #e0e0e0' }}>
               <ListItemIcon>
-                <ListItemButton />
+                <AccountTree />
               </ListItemIcon>
               <ListItemText
                 primary={project.name}

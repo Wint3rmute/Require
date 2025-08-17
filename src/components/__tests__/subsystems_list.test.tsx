@@ -26,7 +26,7 @@ describe('SubsystemsList', () => {
 
   it('renders the title and the correct number of subsystems', () => {
     render(<SubsystemsList subsystems={mockSubsystems} iconMap={mockIconMap} onDelete={mockOnDelete} />);
-    expect(screen.getByRole('heading', { name: /system subsystems/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /subsystems/i })).toBeInTheDocument();
     const listItems = screen.getAllByRole('listitem');
     expect(listItems).toHaveLength(mockSubsystems.length);
   });
