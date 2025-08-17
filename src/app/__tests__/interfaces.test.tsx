@@ -100,4 +100,83 @@ describe('Interfaces Page with localStorage', () => {
     const finalItemCount = screen.getAllByRole('listitem').length;
     expect(finalItemCount).toBe(initialItemCount);
   });
+
+  it('allows a user to confirm and delete an interface', async () => {
+    const setItemSpy = jest.spyOn(localStorageMock, 'setItem');
+    render(<InterfacesPage />);
+
+    const initialItem = screen.getByText('UART');
+    expect(initialItem).toBeInTheDocument();
+
+    const listItem = initialItem.closest('li');
+    const deleteButton = listItem!.querySelector('[aria-label="delete"]');
+    fireEvent.click(deleteButton!);
+
+    // Dialog should appear
+    const dialogTitle = await screen.findByRole('heading', { name: /confirm deletion/i });
+    expect(dialogTitle).toBeInTheDocument();
+
+    // Click the confirm delete button in the dialog
+    const confirmButton = screen.getByRole('button', { name: /delete/i });
+    fireEvent.click(confirmButton);
+
+    // Wait for the item to be removed
+    await waitFor(() => {
+      expect(screen.queryByText('UART')).not.toBeInTheDocument();
+    });
+
+    // Check localStorage
+    expect(setItemSpy).toHaveBeenCalledWith('interfaces', expect.not.stringContaining('UART'));
+    setItemSpy.mockRestore();
+  });
+
+  it('allows a user to cancel the deletion', async () => {
+    render(<InterfacesPage />);
+
+    const initialItem = screen.getByText('UART');
+    expect(initialItem).toBeInTheDocument();
+
+    const listItem = initialItem.closest('li');
+    const deleteButton = listItem!.querySelector('[aria-label="delete"]');
+    fireEvent.click(deleteButton!);
+
+    // Dialog should appear
+    const dialogTitle = await screen.findByRole('heading', { name: /confirm deletion/i });
+    expect(dialogTitle).toBeInTheDocument();
+
+    // Click the cancel button
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    fireEvent.click(cancelButton);
+
+    // Wait for the dialog to disappear
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: /confirm deletion/i })).not.toBeInTheDocument();
+    });
+
+    // The item should still be in the document
+    expect(screen.getByText('UART')).toBeInTheDocument();
+  });
+
+  it('saves an empty array to localStorage when the last interface is deleted', async () => {
+    // Start with one item
+    const initialData = [{ id: 'single', name: 'Single Interface', description: 'desc', icon: 'default' }];
+    localStorageMock.setItem('interfaces', JSON.stringify(initialData));
+    const setItemSpy = jest.spyOn(localStorageMock, 'setItem');
+
+    render(<InterfacesPage />);
+
+    const itemToDelete = screen.getByText('Single Interface');
+    const deleteButton = itemToDelete.closest('li')!.querySelector('[aria-label="delete"]');
+    fireEvent.click(deleteButton!);
+
+    const confirmButton = await screen.findByRole('button', { name: /delete/i });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Single Interface')).not.toBeInTheDocument();
+    });
+
+    expect(localStorage.getItem('interfaces')).toBe('[]');
+    setItemSpy.mockRestore();
+  });
 });

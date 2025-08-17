@@ -1,70 +1,63 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SubsystemsList from '../subsystems_list';
+import { type Subsystem } from '../subsystems_list';
+import React from 'react';
+import BuildIcon from '@mui/icons-material/Build';
+import ComputerIcon from '@mui/icons-material/Computer';
+
+// Create mock data for the tests
+const mockIconMap = {
+  build: <BuildIcon />,
+  computer: <ComputerIcon />,
+};
+
+const mockSubsystems: Subsystem[] = [
+  { id: '1', name: 'Test Subsystem 1', description: 'Description for test 1', icon: 'build' },
+  { id: '2', name: 'Test Subsystem 2', description: 'Description for test 2', icon: 'computer' },
+];
 
 describe('SubsystemsList', () => {
-  it('renders without crashing', () => {
-    render(<SubsystemsList />);
+  const mockOnDelete = jest.fn();
+
+  beforeEach(() => {
+    mockOnDelete.mockClear();
+  });
+
+  it('renders the title and the correct number of subsystems', () => {
+    render(<SubsystemsList subsystems={mockSubsystems} iconMap={mockIconMap} onDelete={mockOnDelete} />);
     expect(screen.getByRole('heading', { name: /system subsystems/i })).toBeInTheDocument();
+    const listItems = screen.getAllByRole('listitem');
+    expect(listItems).toHaveLength(mockSubsystems.length);
   });
 
-  it('displays the correct title', () => {
-    render(<SubsystemsList />);
-    expect(screen.getByText('System Subsystems')).toBeInTheDocument();
+  it('displays the names and descriptions', () => {
+    render(<SubsystemsList subsystems={mockSubsystems} iconMap={mockIconMap} onDelete={mockOnDelete} />);
+    expect(screen.getByText('Test Subsystem 1')).toBeInTheDocument();
+    expect(screen.getByText('Description for test 1')).toBeInTheDocument();
+    expect(screen.getByText('Test Subsystem 2')).toBeInTheDocument();
+    expect(screen.getByText('Description for test 2')).toBeInTheDocument();
   });
 
-  it('renders all 10 subsystems', () => {
-    render(<SubsystemsList />);
-    const listItems = screen.getAllByRole('button');
-    expect(listItems).toHaveLength(10);
+  it('calls onDelete with the correct ID when the delete button is clicked', () => {
+    render(<SubsystemsList subsystems={mockSubsystems} iconMap={mockIconMap} onDelete={mockOnDelete} />);
+    const deleteButtons = screen.getAllByLabelText('delete');
+    fireEvent.click(deleteButtons[0]);
+    expect(mockOnDelete).toHaveBeenCalledWith(mockSubsystems[0].id);
+    expect(mockOnDelete).toHaveBeenCalledTimes(1);
   });
 
-  it('displays expected subsystem names', () => {
-    render(<SubsystemsList />);
-    
-    const expectedSubsystems = [
-      'Engine',
-      'Processing Unit', 
-      'Tires',
-      'Power System',
-      'Cooling System',
-      'Memory Storage',
-      'Security Module',
-      'Storage System',
-      'Communication',
-      'Control System'
-    ];
-
-    expectedSubsystems.forEach(name => {
-      expect(screen.getByText(name)).toBeInTheDocument();
-    });
+  it('renders the correct icons', () => {
+    render(<SubsystemsList subsystems={mockSubsystems} iconMap={mockIconMap} onDelete={mockOnDelete} />);
+    const listItems = screen.getAllByRole('listitem');
+    expect(listItems[0].querySelector('[data-testid="BuildIcon"]')).toBeInTheDocument();
+    expect(listItems[1].querySelector('[data-testid="ComputerIcon"]')).toBeInTheDocument();
   });
 
-  it('displays subsystem descriptions', () => {
-    render(<SubsystemsList />);
-    
-    expect(screen.getByText(/primary propulsion system/i)).toBeInTheDocument();
-    expect(screen.getByText(/central computational core/i)).toBeInTheDocument();
-    expect(screen.getByText(/ground contact interface/i)).toBeInTheDocument();
-  });
-
-  it('renders icons for each subsystem', () => {
-    render(<SubsystemsList />);
-    const icons = screen.getAllByTestId(/.*icon$/i);
-    expect(icons.length).toBeGreaterThan(0);
-  });
-
-  it('has clickable subsystem items', () => {
-    render(<SubsystemsList />);
-    const buttons = screen.getAllByRole('button');
-    buttons.forEach(button => {
-      expect(button).toBeEnabled();
-    });
-  });
-
-  it('applies correct styling structure', () => {
-    render(<SubsystemsList />);
-    const container = screen.getByRole('heading').parentElement;
-    expect(container).toHaveStyle({ width: '100%' });
+  it('renders a fallback icon if the icon key is not in the map', () => {
+    const subsystemsWithFallback = [...mockSubsystems, { id: '3', name: 'Fallback', description: 'desc', icon: 'invalid' }];
+    render(<SubsystemsList subsystems={subsystemsWithFallback} iconMap={mockIconMap} onDelete={mockOnDelete} />);
+    const fallbackItem = screen.getByText('Fallback').closest('li');
+    expect(fallbackItem!.querySelector('[data-testid="SettingsIcon"]')).toBeInTheDocument();
   });
 });

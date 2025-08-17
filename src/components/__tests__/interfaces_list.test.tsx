@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import InterfacesList from '../interfaces_list';
 import { type Interface } from '../interfaces_list';
@@ -52,12 +52,26 @@ describe('InterfacesList', () => {
   });
 
   it('has clickable interface items', () => {
-    render(<InterfacesList interfaces={mockInterfaces} iconMap={mockIconMap} />);
-    const buttons = screen.getAllByRole('button');
+    const onDeleteMock = jest.fn();
+    render(<InterfacesList interfaces={mockInterfaces} iconMap={mockIconMap} onDelete={onDeleteMock} />);
+    const buttons = screen.getAllByRole('button', {name: 'delete'});
     buttons.forEach(button => {
       expect(button).toBeEnabled();
     });
     expect(buttons.length).toBe(mockInterfaces.length);
+  });
+
+  it('calls the onDelete callback with the correct id when delete is clicked', () => {
+    const onDeleteMock = jest.fn();
+    render(<InterfacesList interfaces={mockInterfaces} iconMap={mockIconMap} onDelete={onDeleteMock} />);
+    
+    // Find the delete button for the first interface
+    const deleteButtons = screen.getAllByLabelText('delete');
+    fireEvent.click(deleteButtons[0]);
+
+    // Check that the callback was called with the ID of the first mock interface
+    expect(onDeleteMock).toHaveBeenCalledWith(mockInterfaces[0].id);
+    expect(onDeleteMock).toHaveBeenCalledTimes(1);
   });
 
   it('renders the default fallback icon when an icon key is not in the map', () => {

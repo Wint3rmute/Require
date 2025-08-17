@@ -9,6 +9,11 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 
 // Import all the icons
 import UsbIcon from '@mui/icons-material/Usb';
@@ -53,6 +58,9 @@ export default function Page() {
   const [interfaces, setInterfaces] = useState<Interface[]>([]);
   const [newName, setNewName] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [interfaceToDelete, setInterfaceToDelete] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Effect to load interfaces from localStorage on initial render
   useEffect(() => {
@@ -62,15 +70,15 @@ export default function Page() {
     } else {
       setInterfaces(initialInterfaces);
     }
+    setIsLoaded(true);
   }, []);
 
   // Effect to save interfaces to localStorage whenever they change
   useEffect(() => {
-    // Don't save the initial empty array before hydration
-    if (interfaces.length > 0) {
+    if (isLoaded) {
       localStorage.setItem('interfaces', JSON.stringify(interfaces));
     }
-  }, [interfaces]);
+  }, [interfaces, isLoaded]);
 
   const handleCreateInterface = (event: React.FormEvent) => {
     event.preventDefault();
@@ -86,6 +94,24 @@ export default function Page() {
     setInterfaces([...interfaces, newInterface]);
     setNewName('');
     setNewDescription('');
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setInterfaceToDelete(id);
+    setDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setInterfaceToDelete(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (interfaceToDelete) {
+      const updatedInterfaces = interfaces.filter((iface) => iface.id !== interfaceToDelete);
+      setInterfaces(updatedInterfaces);
+    }
+    handleDialogClose();
   };
 
   return (
@@ -129,7 +155,28 @@ export default function Page() {
             Add Interface
           </Button>
         </Box>
-        <InterfacesList interfaces={interfaces} iconMap={iconMap} />
+        <InterfacesList interfaces={interfaces} iconMap={iconMap} onDelete={handleDeleteClick} />
+        <Dialog
+          open={dialogOpen}
+          onClose={handleDialogClose}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">
+            {"Confirm Deletion"}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to delete this interface? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogClose}>Cancel</Button>
+            <Button onClick={handleConfirmDelete} color="error" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
       </main>
     </div>
   );
