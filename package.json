@@ -16,6 +16,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.1",
     "@mui/material": "^7.3.1",
+    "@prisma/client": "^6.14.0",
     "@xyflow/react": "^12.8.3",
     "next": "15.4.6",
     "react": "19.1.0",
@@ -36,8 +37,10 @@
     "identity-obj-proxy": "^3.0.0",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
+    "prisma": "^6.14.0",
     "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.4",
     "typescript": "^5"
   }
 }
