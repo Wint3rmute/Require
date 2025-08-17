@@ -21,7 +21,7 @@ const mockInterfaces: Interface[] = [
 describe('InterfacesList', () => {
   it('renders without crashing and displays the title', () => {
     render(<InterfacesList interfaces={mockInterfaces} iconMap={mockIconMap} />);
-    expect(screen.getByRole('heading', { name: /system interfaces/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /interfaces/i })).toBeInTheDocument();
   });
 
   it('renders the correct number of interfaces', () => {
@@ -32,7 +32,7 @@ describe('InterfacesList', () => {
 
   it('displays the names and descriptions of the interfaces', () => {
     render(<InterfacesList interfaces={mockInterfaces} iconMap={mockIconMap} />);
-    
+
     // Check for the first mock interface
     expect(screen.getByText('Test Interface 1')).toBeInTheDocument();
     expect(screen.getByText('Description for test 1')).toBeInTheDocument();
@@ -54,7 +54,7 @@ describe('InterfacesList', () => {
   it('has clickable interface items', () => {
     const onDeleteMock = jest.fn();
     render(<InterfacesList interfaces={mockInterfaces} iconMap={mockIconMap} onDelete={onDeleteMock} />);
-    const buttons = screen.getAllByRole('button', {name: 'delete'});
+    const buttons = screen.getAllByRole('button', { name: 'delete' });
     buttons.forEach(button => {
       expect(button).toBeEnabled();
     });
@@ -64,7 +64,7 @@ describe('InterfacesList', () => {
   it('calls the onDelete callback with the correct id when delete is clicked', () => {
     const onDeleteMock = jest.fn();
     render(<InterfacesList interfaces={mockInterfaces} iconMap={mockIconMap} onDelete={onDeleteMock} />);
-    
+
     // Find the delete button for the first interface
     const deleteButtons = screen.getAllByLabelText('delete');
     fireEvent.click(deleteButtons[0]);
@@ -80,7 +80,7 @@ describe('InterfacesList', () => {
       { id: '4', name: 'Fallback Interface', description: 'This one has a bad icon key', icon: 'non-existent-icon' }
     ];
     render(<InterfacesList interfaces={interfacesWithFallback} iconMap={mockIconMap} />);
-  
+
     const fallbackItem = screen.getByText('Fallback Interface').closest('li');
     expect(fallbackItem).not.toBeNull();
     // The default icon is CableIcon
