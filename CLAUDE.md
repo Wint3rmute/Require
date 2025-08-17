@@ -13,6 +13,8 @@ Require is a system modeling and requirements tracing application built with Nex
 - **Production start**: `npm start`
 - **Lint**: `npm run lint`
 - **Test**: `npm test` (Jest with React Testing Library)
+- **E2E Test**: `npm run test:e2e` (Playwright end-to-end tests)
+- **E2E Test UI**: `npm run test:e2e:ui` (Playwright with interactive UI)
 
 **IMPORTANT**: Always run `npm run lint` and `npm run build` to verify changes before considering work complete.
 
@@ -25,6 +27,7 @@ Require is a system modeling and requirements tracing application built with Nex
 - **Styling**: CSS Modules + Material-UI components
 - **TypeScript**: Strict mode enabled with enhanced compiler checks
 - **Testing**: Jest + React Testing Library + jsdom environment
+- **E2E Testing**: Playwright for end-to-end browser testing
 
 ### Project Structure
 - `src/app/` - Next.js App Router pages and layouts
@@ -53,6 +56,7 @@ Require is a system modeling and requirements tracing application built with Nex
 - `jest-environment-jsdom` - DOM environment for Jest
 - `ts-jest` - TypeScript transformer for Jest
 - `identity-obj-proxy` - CSS modules mocking for tests
+- `@playwright/test` - End-to-end testing framework
 
 ### TypeScript Configuration
 - **Path mapping**: `@/*` maps to `./src/*`
@@ -105,37 +109,15 @@ Each item has `id`, `name`, `description`, and `icon` properties with appropriat
 
 ## Testing Strategy
 
-### Jest Configuration
-- **Environment**: jsdom for DOM testing
-- **TypeScript Support**: ts-jest transformer with React JSX support
-- **Module Mapping**: `@/*` aliases and CSS module mocking
-- **Coverage**: 100% statement, branch, function, and line coverage required
-- **Setup**: Global jest-dom matchers configured
+### Jest (Unit/Component Testing)
+- **Environment**: jsdom with ts-jest transformer
+- **Coverage**: 100% required for components and pages
+- **Location**: `__tests__/` directories alongside source code
+- **Focus**: User-facing behavior, accessibility, interactions
+- **Current Coverage**: SubsystemsList, InterfacesList, ButtonAppBar, all pages
 
-### Test Patterns
-- **Component Tests**: Focus on user-facing behavior, not implementation details
-- **Rendering Tests**: Verify components render without errors
-- **Content Tests**: Validate expected text, data, and structure appear
-- **Interaction Tests**: Ensure clickable elements work correctly
-- **Accessibility Tests**: Check for proper ARIA roles and labels
-- **Mock Strategy**: Mock external dependencies (Next.js Link, CSS imports)
-
-### Test Organization
-- Tests located in `__tests__/` directories alongside source code
-- Component tests: `src/components/__tests__/`
-- Page tests: `src/app/__tests__/`
-- File naming: `{component}.test.tsx` pattern
-- Describe blocks group related functionality
-
-### Current Test Coverage
-- **SubsystemsList**: 10 subsystems rendering, content validation, icons, interactions
-- **InterfacesList**: 12 interfaces rendering, technical descriptions, icons, interactions  
-- **ButtonAppBar**: Navigation links, proper hrefs, Material-UI structure, accessibility
-- **Pages**: Integration tests verifying page structure and component mounting
-
-### Testing Best Practices
-- Use React Testing Library queries by accessibility (role, label, text)
-- Avoid testing implementation details (CSS classes, internal state)
-- Mock external dependencies at module level
-- Verify user-visible behavior and interactions
-- Test error states and edge cases when applicable
+### Playwright (End-to-End Testing)
+- **Config**: `playwright.config.ts` - Chromium only, list reporter, auto-starts dev server
+- **Tests**: `./tests/` directory - page loads, navigation flows, critical user paths
+- **Coverage**: Home page verification, complete navigation between all main pages
+- **Notes**: Uses "Require" brand link for home navigation, semantic selectors preferred

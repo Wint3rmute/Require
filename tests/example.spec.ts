@@ -10,7 +10,7 @@ test('home page loads correctly', async ({ page }) => {
   await expect(page.getByRole('banner')).toBeVisible();
 
   // Check for navigation links in navbar
-  await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Require' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Subsystems' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Interfaces' })).toBeVisible();
 });
@@ -26,7 +26,7 @@ test('navigation works correctly', async ({ page }) => {
   await page.getByRole('link', { name: 'Interfaces' }).click();
   await expect(page).toHaveURL('/interfaces');
 
-  // Navigate back to Home
-  await page.getByRole('link', { name: 'Home' }).click();
+  // Navigate back to Home using the Require link
+  await page.getByRole('link', { name: 'Require' }).click();
   await expect(page).toHaveURL('/');
 });
