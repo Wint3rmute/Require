@@ -8,46 +8,34 @@ import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SettingsIcon from '@mui/icons-material/Settings'; // Default icon
 
-export interface Subsystem {
-  id: string;
-  name: string;
-  description: string;
-  icon: string; // Serializable icon identifier
-}
+import { Project } from '@/generated/prisma';
 
-interface SubsystemsListProps {
-  subsystems: Subsystem[];
-  iconMap: { [key: string]: React.ReactElement };
-  onDelete: (id: string) => void;
-}
-
-export default function SubsystemsList({ subsystems, iconMap, onDelete }: SubsystemsListProps) {
+export function ProjectsList(projects: Project[]) {
   return (
     <Box sx={{ width: '100%', maxWidth: 800, bgcolor: 'background.paper' }}>
       <Typography variant="h4" component="h1" sx={{ mb: 3, textAlign: 'center' }}>
         System Subsystems
       </Typography>
       <List>
-        {subsystems.map((subsystem) => (
+        {projects.map((project) => (
           <ListItem
-            key={subsystem.id}
+            key={project.id}
             disablePadding
             sx={{ mb: 1 }}
             secondaryAction={
-              <IconButton edge="end" aria-label="delete" onClick={() => onDelete(subsystem.id)}>
+              <IconButton edge="end" aria-label="delete" onClick={() => { }}>
                 <DeleteIcon />
               </IconButton>
             }
           >
             <ListItemButton sx={{ borderRadius: 1, border: '1px solid #e0e0e0' }}>
               <ListItemIcon>
-                {iconMap[subsystem.icon] || <SettingsIcon />}
+                <ListItemButton />
               </ListItemIcon>
               <ListItemText
-                primary={subsystem.name}
-                secondary={subsystem.description}
+                primary={project.name}
+                secondary={project.name}
               />
             </ListItemButton>
           </ListItem>
