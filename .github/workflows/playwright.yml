@@ -1,11 +1,27 @@
-name: Playwright Tests
+name: CI Tests
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
 jobs:
-  test:
+  jest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+    - name: Install dependencies
+      run: npm ci
+    - name: Run Jest tests
+      run: npm test
+    - name: Run lint
+      run: npm run lint
+    - name: Run build
+      run: npm run build
+
+  playwright:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
