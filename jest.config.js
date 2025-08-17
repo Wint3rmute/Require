@@ -47,6 +47,13 @@ const config = {
     "**/*.(test|spec).(js|jsx|ts|tsx)"
   ],
   
+  // Ignore Playwright test directories
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/tests/",
+    "/tests-examples/"
+  ],
+  
   // Transform ignore patterns
   transformIgnorePatterns: [
     "/node_modules/",
