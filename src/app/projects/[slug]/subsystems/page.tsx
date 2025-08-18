@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import styles from "../page.module.css";
+import styles from "@/app/page.module.css";
 import SubsystemsList from "@/components/subsystems_list";
 import { type Subsystem } from "@/components/subsystems_list";
 import Box from '@mui/material/Box';
@@ -52,6 +52,7 @@ const initialSubsystems: Subsystem[] = [
 ];
 
 export default function Page() {
+
   const [subsystems, setSubsystems] = useState<Subsystem[]>([]);
   const [newName, setNewName] = useState('');
   const [newDescription, setNewDescription] = useState('');
@@ -113,8 +114,8 @@ export default function Page() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <Box 
-          component="form" 
+        <Box
+          component="form"
           onSubmit={handleCreateSubsystem}
           sx={{ width: '100%', maxWidth: 800, p: 4, borderRadius: 2, boxShadow: 1, mb: 4, bgcolor: 'background.paper' }}
         >

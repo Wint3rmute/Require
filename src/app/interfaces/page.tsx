@@ -80,21 +80,6 @@ export default function Page() {
     }
   }, [interfaces, isLoaded]);
 
-  const handleCreateInterface = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!newName.trim()) return; // Prevent creating empty interfaces
-
-    const newInterface: Interface = {
-      id: `iface-${Date.now()}`,
-      name: newName.trim(),
-      description: newDescription.trim(),
-      icon: 'default', // Assign a default icon for new interfaces
-    };
-
-    setInterfaces([...interfaces, newInterface]);
-    setNewName('');
-    setNewDescription('');
-  };
 
   const handleDeleteClick = (id: string) => {
     setInterfaceToDelete(id);
@@ -117,44 +102,7 @@ export default function Page() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <Box 
-          component="form" 
-          onSubmit={handleCreateInterface}
-          sx={{
-            width: '100%',
-            maxWidth: 800,
-            bgcolor: 'background.paper',
-            p: 4,
-            borderRadius: 2,
-            boxShadow: 1,
-            mb: 4,
-          }}
-        >
-          <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
-            Create New Interface
-          </Typography>
-          <TextField
-            fullWidth
-            label="Interface Name"
-            variant="outlined"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Description"
-            variant="outlined"
-            value={newDescription}
-            onChange={(e) => setNewDescription(e.target.value)}
-            multiline
-            rows={3}
-            sx={{ mb: 2 }}
-          />
-          <Button type="submit" variant="contained" color="primary">
-            Add Interface
-          </Button>
-        </Box>
+        <CreateInterfaceForm />
         <InterfacesList interfaces={interfaces} iconMap={iconMap} onDelete={handleDeleteClick} />
         <Dialog
           open={dialogOpen}
@@ -181,3 +129,48 @@ export default function Page() {
     </div>
   );
 }
+
+export function CreateInterfaceForm() {
+  const [newName, setNewName] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+
+  function handleCreateInterface() { }
+
+  return <Box
+    component="form"
+    onSubmit={handleCreateInterface}
+    sx={{
+      width: '100%',
+      maxWidth: 800,
+      bgcolor: 'background.paper',
+      p: 4,
+      borderRadius: 2,
+      boxShadow: 1,
+      mb: 4,
+    }}
+  >
+    <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
+      Create New Interface
+    </Typography>
+    <TextField
+      fullWidth
+      label="Interface Name"
+      variant="outlined"
+      value={newName}
+      onChange={(e) => setNewName(e.target.value)}
+      sx={{ mb: 2 }} />
+    <TextField
+      fullWidth
+      label="Description"
+      variant="outlined"
+      value={newDescription}
+      onChange={(e) => setNewDescription(e.target.value)}
+      multiline
+      rows={3}
+      sx={{ mb: 2 }} />
+    <Button type="submit" variant="contained" color="primary">
+      Add Interface
+    </Button>
+  </Box>;
+}
+
