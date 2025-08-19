@@ -15,6 +15,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
+import { createInterfaceDefinition } from '@/lib/db';
+
 // Import all the icons
 import UsbIcon from '@mui/icons-material/Usb';
 import CableIcon from '@mui/icons-material/Cable';
@@ -130,18 +132,14 @@ export default function Page() {
   );
 }
 
-export function CreateInterfaceForm() {
+export function CreateInterfaceForm({ project_name }: { project_name: string }) {
   const [newName, setNewName] = useState('');
   const [newDescription, setNewDescription] = useState('');
 
-  function handleCreateInterface() { }
-
   return <Box
     component="form"
-    onSubmit={handleCreateInterface}
+    action={createInterfaceDefinition}
     sx={{
-      width: '100%',
-      maxWidth: 800,
       bgcolor: 'background.paper',
       p: 4,
       borderRadius: 2,
@@ -152,6 +150,13 @@ export function CreateInterfaceForm() {
     <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
       Create New Interface
     </Typography>
+    <TextField
+      fullWidth
+      label="Project Name"
+      variant="outlined"
+      value={project_name}
+      disabled={true}
+      sx={{ mb: 2 }} />
     <TextField
       fullWidth
       label="Interface Name"
@@ -168,7 +173,7 @@ export function CreateInterfaceForm() {
       multiline
       rows={3}
       sx={{ mb: 2 }} />
-    <Button type="submit" variant="contained" color="primary">
+    <Button type="submit" variant="contained" color="primary" action={createInterfaceDefinition}>
       Add Interface
     </Button>
   </Box>;

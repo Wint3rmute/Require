@@ -6,23 +6,23 @@ import { Button } from "@mui/material";
 export default async function ProjectDashboardPage({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ project_name: string }>
 }) {
-  const { slug } = await params
-  const project = await getProjectBySlug(slug);
+  const { project_name } = await params
+  const project = await getProjectBySlug(project_name);
 
   if (project == null) {
     return (
       <div className={styles.page}>
         <main className={styles.main}>
-          <ProjectNotFound slug={slug} />
+          <ProjectNotFound slug={project_name} />
         </main>
       </div>
     )
   }
 
-  const num_components = getNumComponents(slug);
-  const num_interfaces = getNumInterfaces(slug);
+  const num_components = getNumComponents(project_name);
+  const num_interfaces = getNumInterfaces(project_name);
 
   return (
     <div className={styles.page}>
@@ -32,12 +32,12 @@ export default async function ProjectDashboardPage({
         </p>
 
         <p>Total components: {num_components}</p>
-        <Link href={`/projects/${slug}/components/new`}>
+        <Link href={`/projects/${project_name}/components/new`}>
           <Button>new component</Button>
         </Link>
 
         <p>Total interfaces: {num_interfaces}</p>
-        <Link href={`/projects/${slug}/interfaces/new`}>
+        <Link href={`/projects/${project_name}/interfaces/new`}>
           <Button>new interface</Button>
         </Link>
 
