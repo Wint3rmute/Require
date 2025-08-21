@@ -5,17 +5,12 @@ import { useState, useEffect } from 'react';
 import styles from "../page.module.css";
 import InterfacesList from "@/components/interfaces_list";
 import { type Interface } from "@/components/interfaces_list";
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-
-import { createInterfaceDefinition } from '@/lib/db';
 
 // Import all the icons
 import UsbIcon from '@mui/icons-material/Usb';
@@ -58,8 +53,6 @@ const initialInterfaces: Interface[] = [
 
 export default function Page() {
   const [interfaces, setInterfaces] = useState<Interface[]>([]);
-  const [newName, setNewName] = useState('');
-  const [newDescription, setNewDescription] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [interfaceToDelete, setInterfaceToDelete] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -104,7 +97,6 @@ export default function Page() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <CreateInterfaceForm />
         <InterfacesList interfaces={interfaces} iconMap={iconMap} onDelete={handleDeleteClick} />
         <Dialog
           open={dialogOpen}
@@ -132,50 +124,5 @@ export default function Page() {
   );
 }
 
-export function CreateInterfaceForm({ project_name }: { project_name: string }) {
-  const [newName, setNewName] = useState('');
-  const [newDescription, setNewDescription] = useState('');
 
-  return <Box
-    component="form"
-    action={createInterfaceDefinition}
-    sx={{
-      bgcolor: 'background.paper',
-      p: 4,
-      borderRadius: 2,
-      boxShadow: 1,
-      mb: 4,
-    }}
-  >
-    <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
-      Create New Interface
-    </Typography>
-    <TextField
-      fullWidth
-      label="Project Name"
-      variant="outlined"
-      value={project_name}
-      disabled={true}
-      sx={{ mb: 2 }} />
-    <TextField
-      fullWidth
-      label="Interface Name"
-      variant="outlined"
-      value={newName}
-      onChange={(e) => setNewName(e.target.value)}
-      sx={{ mb: 2 }} />
-    <TextField
-      fullWidth
-      label="Description"
-      variant="outlined"
-      value={newDescription}
-      onChange={(e) => setNewDescription(e.target.value)}
-      multiline
-      rows={3}
-      sx={{ mb: 2 }} />
-    <Button type="submit" variant="contained" color="primary" action={createInterfaceDefinition}>
-      Add Interface
-    </Button>
-  </Box>;
-}
 

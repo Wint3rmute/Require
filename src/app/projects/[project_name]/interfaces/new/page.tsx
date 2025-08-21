@@ -1,4 +1,4 @@
-import { CreateInterfaceForm } from "@/app/interfaces/page"
+import { CreateInterfaceForm } from "@/components/create_interface_form"
 import styles from "@/app/page.module.css";
 
 export default async function NewInterfacePage({

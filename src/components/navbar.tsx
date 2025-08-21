@@ -34,6 +34,9 @@ export default function ButtonAppBar() {
           <Button color="inherit" component={Link} href="/interfaces">
             Interfaces
           </Button>
+          <Button color="inherit" component={Link} href="/system-model">
+            Playground
+          </Button>
           <Button color="inherit">Login</Button>
         </Toolbar>
       </AppBar>
