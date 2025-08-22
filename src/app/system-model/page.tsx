@@ -25,19 +25,29 @@ interface Interface {
   name: string
 }
 
+interface ChildSubsystem {
+  subsystem: Subsystem,
+  position: {
+    x: number,
+    y: number
+  }
+}
+
 interface Subsystem {
   name: string,
-  children: Subsystem[]
+  children: ChildSubsystem[]
   interfaces: Interface[]
 }
 
 
-const view: Subsystem[] = [
-  {
+const view: ChildSubsystem[] = [{
+  position: { x: 10, y: 10 },
+  subsystem: {
     name: "satellite",
     interfaces: [],
-    children: [
-      {
+    children: [{
+      position: { x: 0.0, y: 0.0 },
+      subsystem: {
         name: "obc",
         children: [],
         interfaces: [{
@@ -45,26 +55,32 @@ const view: Subsystem[] = [
         }
         ]
       }
-    ]
-  },
-  {
+    }]
+  }
+}, {
+  position: { x: 10, y: 10 },
+  subsystem: {
     name: "egse",
     interfaces: [],
     children: [
       {
-        name: "star-dundee",
-        interfaces: [{ name: "spacewire" }],
-        children: []
+        position: { x: 20.0, y: 30.0 },
+        subsystem: {
+          name: "star-dundee",
+          interfaces: [{ name: "spacewire" }],
+          children: []
+        }
       }
     ]
   }
+}
 
 ]
 
 const SubsystemNode = ({ data, selected }: { data: NodeResizerProps, selected: boolean }) => {
   return (
     <div style={{ backgroundColor: "purple" }}>
-      <NodeResizer minWidth={100} minHeight={30} isVisible={selected} style={{ "background-color": "orange" }} />
+      <NodeResizer minWidth={100} minHeight={30} isVisible={true} style={{ "background-color": "orange" }} />
       <Handle type="target" position={Position.Left} />
       <div style={{ padding: 10, "background-color": "orange" }}>{data.label}</div>
       <Handle type="source" position={Position.Right} />
@@ -72,37 +88,38 @@ const SubsystemNode = ({ data, selected }: { data: NodeResizerProps, selected: b
   );
 };
 
-function build_nodes_from_system_view(view: Subsystem[], parent_id: string | null = null): Node[] {
+function build_nodes_from_system_view(view: ChildSubsystem[], parent_id: string | null = null): Node[] {
   const nodes: Node[] = [];
 
   for (const parent of view) {
     if (parent_id !== null) {
       nodes.push({
-        id: parent.name,
+        id: parent.subsystem.name,
         type: "subsystem",
         parentId: parent_id,
         extent: 'parent',
-        position: { x: 0, y: 0 },
+        position: parent.position,
         data: {
-          label: parent.name
+          label: parent.subsystem.name
         }
       })
     } else {
       nodes.push({
-        id: parent.name,
+        id: parent.subsystem.name,
         position: { x: 0, y: 0 },
         type: "subsystem",
         data: {
-          label: parent.name
+          label: parent.subsystem.name
         }
       })
     }
 
-    for (const iface of parent.interfaces) {
+    for (const iface of parent.subsystem.interfaces) {
       nodes.push({
-        id: `${parent.name}/${iface.name}`,
-        parentId: parent.name,
-        position: { x: 0, y: 0 },
+        id: `${parent.subsystem.name}/${iface.name}`,
+        type: "subsystem",
+        parentId: parent.subsystem.name,
+        position: { x: 40, y: 40 },
         data: {
           label: iface.name
         },
@@ -111,7 +128,7 @@ function build_nodes_from_system_view(view: Subsystem[], parent_id: string | nul
     }
 
     nodes.push(
-      ...build_nodes_from_system_view(parent.children, parent.name)
+      ...build_nodes_from_system_view(parent.subsystem.children, parent.subsystem.name)
     )
 
   }
@@ -136,6 +153,11 @@ export default function SystemModel() {
     (changes) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
     [],
   );
+  const onConnect = useCallback(
+    (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
+    [],
+  );
+
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
       <Grid container spacing={2}>
@@ -146,6 +168,7 @@ export default function SystemModel() {
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
             nodeTypes={nodeTypes}
             fitView
           >
