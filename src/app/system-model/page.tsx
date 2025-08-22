@@ -6,7 +6,7 @@ import Grid from '@mui/material/Grid';
 import '@xyflow/react/dist/style.css';
 import { useState, useCallback } from 'react';
 import {
-  ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, Edge, Node, NodeResizerProps,
+  ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, Edge, Node, NodeChange, EdgeChange, Connection,
 
   Background,
   BackgroundVariant,
@@ -73,12 +73,12 @@ const view: ChildSubsystem[] = [{
 
 ]
 
-const SubsystemNode = ({ data }: { data: NodeResizerProps }) => {
+const SubsystemNode = ({ data }: { data: { label: string } }) => {
   return (
     <div style={{ backgroundColor: "purple" }}>
-      <NodeResizer minWidth={100} minHeight={30} isVisible={true} style={{ "background-color": "orange" }} />
+      <NodeResizer minWidth={100} minHeight={30} isVisible={true} />
       <Handle type="target" position={Position.Left} />
-      <div style={{ padding: 10, "background-color": "orange" }}>{data.label}</div>
+      <div style={{ padding: 10, backgroundColor: "orange" }}>{data.label}</div>
       <Handle type="source" position={Position.Right} />
     </div >
   );
@@ -142,15 +142,15 @@ export default function SystemModel() {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
   const onNodesChange = useCallback(
-    (changes) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
+    (changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
     [],
   );
   const onEdgesChange = useCallback(
-    (changes) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
+    (changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
     [],
   );
   const onConnect = useCallback(
-    (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
+    (params: Connection) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
     [],
   );
 

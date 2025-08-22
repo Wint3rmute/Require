@@ -1,6 +1,7 @@
 "use server"
 
 import { PrismaClient, Project } from '@/generated/prisma'
+import { InterfaceFormData } from '@/components/create_interface_form';
 
 const prisma = new PrismaClient()
 
@@ -25,13 +26,11 @@ export async function getNumInterfaces(slug: string): Promise<number> {
   return num_interfaces;
 }
 
-export async function createInterfaceDefinition(formData: FormData) {
-  // const project_name = formData.get('project_name')
-  // const interface_name = formData.get('interface_name')
-  // const description = formData.get('description')
+export async function createInterfaceDefinition(data: InterfaceFormData) {
+  
 
   console.log("Creating iface definition");
-  console.log(formData)
+  console.log(data);
 
   // Update data
   // Revalidate cache

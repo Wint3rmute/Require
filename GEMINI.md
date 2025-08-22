@@ -10,9 +10,9 @@ This file provides guidance for working with the "Require" repository.
 
 - **Build for production**: `npm run build`
 - **Start production server**: `npm start`
-- **Lint code**: `npm run lint`
+- **Lint code**: `npm run lint -- --fix`
 
-**Important**: Always run `npm run lint` to verify changes before completing a task.
+**Important**: Always run `npm run lint -- --fix` to verify changes before completing a task.
 
 ## Architecture
 

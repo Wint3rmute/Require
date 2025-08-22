@@ -64,10 +64,12 @@ const TreeEditorPage = () => {
       if (childIndex !== -1) {
         const newChildren = [...node.children];
         const [movedNode] = newChildren.splice(childIndex, 1);
-        if (direction === 'up') {
-          newChildren.splice(childIndex - 1, 0, movedNode);
-        } else {
-          newChildren.splice(childIndex + 1, 0, movedNode);
+        if (movedNode) {
+          if (direction === 'up') {
+            newChildren.splice(childIndex - 1, 0, movedNode);
+          } else {
+            newChildren.splice(childIndex + 1, 0, movedNode);
+          }
         }
         return { ...node, children: newChildren };
       }

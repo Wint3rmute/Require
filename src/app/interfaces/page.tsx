@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styles from "../page.module.css";
 import InterfacesList from "@/components/interfaces_list";
+import { CreateInterfaceForm, type InterfaceFormData } from "@/components/create_interface_form";
 import { type Interface } from "@/components/interfaces_list";
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -23,6 +24,8 @@ import HeadphonesIcon from '@mui/icons-material/Headphones';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import PrintIcon from '@mui/icons-material/Print';
 import StorageIcon from '@mui/icons-material/Storage';
+import { useLocalStorage } from '@/lib/use_local_storage';
+
 
 // Create a map from string identifiers to icon components
 const iconMap: { [key: string]: React.ReactElement } = {
@@ -52,29 +55,11 @@ const initialInterfaces: Interface[] = [
 ];
 
 export default function Page() {
-  const [interfaces, setInterfaces] = useState<Interface[]>([]);
+
+  const [interfaces, setInterfaces] = useLocalStorage<Interface[]>("interfaces", initialInterfaces);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [interfaceToDelete, setInterfaceToDelete] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  // Effect to load interfaces from localStorage on initial render
-  useEffect(() => {
-    const storedInterfaces = localStorage.getItem('interfaces');
-    if (storedInterfaces) {
-      setInterfaces(JSON.parse(storedInterfaces));
-    } else {
-      setInterfaces(initialInterfaces);
-    }
-    setIsLoaded(true);
-  }, []);
-
-  // Effect to save interfaces to localStorage whenever they change
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('interfaces', JSON.stringify(interfaces));
-    }
-  }, [interfaces, isLoaded]);
-
 
   const handleDeleteClick = (id: string) => {
     setInterfaceToDelete(id);
@@ -94,9 +79,20 @@ export default function Page() {
     handleDialogClose();
   };
 
+  const onInterfaceSubmit = (formData: InterfaceFormData) => {
+    const newInterface: Interface = {
+      id: formData.interface_name.toLowerCase().replace(/\s+/g, '-'),
+      name: formData.interface_name,
+      description: formData.description,
+      icon: 'default',
+    };
+    setInterfaces([...interfaces, newInterface]);
+  };
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
+        <CreateInterfaceForm project_name='Not Yet Implemented' onInterfaceSubmit={onInterfaceSubmit} />
         <InterfacesList interfaces={interfaces} iconMap={iconMap} onDelete={handleDeleteClick} />
         <Dialog
           open={dialogOpen}

@@ -14,7 +14,6 @@ import {
   Edge,
   Connection,
   useReactFlow,
-  NodeResizerProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
@@ -32,7 +31,7 @@ const initialEdges: Edge[] = [];
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
-const ParentNode = ({ data }: { data: NodeResizerProps}) => {
+const ParentNode = ({ data }: { data: { label: string }}) => {
   return (
     <>
       <NodeResizer minWidth={100} minHeight={30} isVisible={true} />
