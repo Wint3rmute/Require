@@ -5,9 +5,6 @@ import Grid from '@mui/material/Grid';
 
 import '@xyflow/react/dist/style.css';
 import Typography from '@mui/material/Typography';
-import InterfacesList from '@/components/interfaces_list_DRAFT';
-import SystemEditor from '@/components/system_editor';
-import Paper from '@mui/material/Paper';
 import { useState, useCallback } from 'react';
 import {
   ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, Edge, Node, NodeResizerProps,
@@ -77,7 +74,7 @@ const view: ChildSubsystem[] = [{
 
 ]
 
-const SubsystemNode = ({ data, selected }: { data: NodeResizerProps, selected: boolean }) => {
+const SubsystemNode = ({ data }: { data: NodeResizerProps }) => {
   return (
     <div style={{ backgroundColor: "purple" }}>
       <NodeResizer minWidth={100} minHeight={30} isVisible={true} style={{ "background-color": "orange" }} />

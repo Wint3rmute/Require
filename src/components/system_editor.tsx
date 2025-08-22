@@ -17,7 +17,6 @@ import {
   NodeResizerProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { memo } from 'react';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
 
 const initialNodes: Node[] = [
@@ -33,7 +32,7 @@ const initialEdges: Edge[] = [];
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
-const ParentNode = ({ data, selected }: { data: NodeResizerProps, selected: boolean }) => {
+const ParentNode = ({ data }: { data: NodeResizerProps}) => {
   return (
     <>
       <NodeResizer minWidth={100} minHeight={30} isVisible={true} />
