@@ -46,7 +46,6 @@ const TreeEditorPage = () => {
   const handleDeleteNode = (nodeId: string) => {
     const deleteNodeRecursive = (node: TreeNode): TreeNode | null => {
       if (node.id === nodeId) {
-        // Cannot delete root
         if (node.id === 'root') return node;
         return null;
       }
@@ -59,6 +58,23 @@ const TreeEditorPage = () => {
     }
   };
 
+  const handleMoveNode = (nodeId: string, direction: 'up' | 'down') => {
+    const moveNodeRecursive = (node: TreeNode): TreeNode => {
+      const childIndex = node.children.findIndex(c => c.id === nodeId);
+      if (childIndex !== -1) {
+        const newChildren = [...node.children];
+        const [movedNode] = newChildren.splice(childIndex, 1);
+        if (direction === 'up') {
+          newChildren.splice(childIndex - 1, 0, movedNode);
+        } else {
+          newChildren.splice(childIndex + 1, 0, movedNode);
+        }
+        return { ...node, children: newChildren };
+      }
+      return { ...node, children: node.children.map(moveNodeRecursive) };
+    };
+    setRoot(moveNodeRecursive(root));
+  };
 
   return (
     <Container>
@@ -71,6 +87,9 @@ const TreeEditorPage = () => {
           onAddChild={handleAddChild}
           onUpdateLabel={handleUpdateLabel}
           onDelete={handleDeleteNode}
+          onMove={handleMoveNode}
+          isFirst={true}
+          isLast={true}
         />
       </Box>
     </Container>

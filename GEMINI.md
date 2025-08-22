@@ -8,7 +8,6 @@ This file provides guidance for working with the "Require" repository.
 
 ## Development Commands
 
-- **Run dev server**: `npm run dev`
 - **Build for production**: `npm run build`
 - **Start production server**: `npm start`
 - **Lint code**: `npm run lint`

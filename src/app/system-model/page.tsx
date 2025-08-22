@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 
 import '@xyflow/react/dist/style.css';
-import Typography from '@mui/material/Typography';
 import { useState, useCallback } from 'react';
 import {
   ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, Edge, Node, NodeResizerProps,

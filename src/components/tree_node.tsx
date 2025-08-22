@@ -4,16 +4,19 @@
 import React, { useState } from 'react';
 import { TreeNode } from '@/app/tree-editor/page';
 import { Box, IconButton, TextField, Typography } from '@mui/material';
-import { Add, Delete, Edit, ArrowDropDown, ArrowRight } from '@mui/icons-material';
+import { Add, Delete, Edit, ArrowDropDown, ArrowRight, ArrowUpward, ArrowDownward } from '@mui/icons-material';
 
 interface TreeNodeProps {
   node: TreeNode;
   onAddChild: (parentId: string) => void;
   onUpdateLabel: (nodeId: string, newLabel: string) => void;
   onDelete: (nodeId: string) => void;
+  onMove: (nodeId: string, direction: 'up' | 'down') => void;
+  isFirst: boolean;
+  isLast: boolean;
 }
 
-const TreeNodeComponent: React.FC<TreeNodeProps> = ({ node, onAddChild, onUpdateLabel, onDelete }) => {
+const TreeNodeComponent: React.FC<TreeNodeProps> = ({ node, onAddChild, onUpdateLabel, onDelete, onMove, isFirst, isLast }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newLabel, setNewLabel] = useState(node.label);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -23,10 +26,12 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({ node, onAddChild, onUpdate
     setIsEditing(false);
   };
 
+  const isRoot = node.id === 'root';
+
   return (
     <Box sx={{ pl: 2, borderLeft: '1px solid #ccc' }}>
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <IconButton size="small" onClick={() => setIsExpanded(!isExpanded)}>
+        <IconButton size="small" onClick={() => setIsExpanded(!isExpanded)} disabled={node.children.length === 0}>
           {isExpanded ? <ArrowDropDown /> : <ArrowRight />}
         </IconButton>
         {isEditing ? (
@@ -47,24 +52,35 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({ node, onAddChild, onUpdate
         <IconButton size="small" onClick={() => onAddChild(node.id)}>
           <Add />
         </IconButton>
-        <IconButton size="small" onClick={() => setIsEditing(true)}>
+        <IconButton size="small" onClick={() => setIsEditing(true)} disabled={isRoot}>
           <Edit />
         </IconButton>
-        {node.id !== 'root' && (
-          <IconButton size="small" onClick={() => onDelete(node.id)}>
-            <Delete />
-          </IconButton>
+        {!isRoot && (
+          <>
+            <IconButton size="small" onClick={() => onMove(node.id, 'up')} disabled={isFirst}>
+              <ArrowUpward />
+            </IconButton>
+            <IconButton size="small" onClick={() => onMove(node.id, 'down')} disabled={isLast}>
+              <ArrowDownward />
+            </IconButton>
+            <IconButton size="small" onClick={() => onDelete(node.id)}>
+              <Delete />
+            </IconButton>
+          </>
         )}
       </Box>
       {isExpanded && (
         <Box sx={{ pl: 2 }}>
-          {node.children.map((child) => (
+          {node.children.map((child, index) => (
             <TreeNodeComponent
               key={child.id}
               node={child}
               onAddChild={onAddChild}
               onUpdateLabel={onUpdateLabel}
               onDelete={onDelete}
+              onMove={onMove}
+              isFirst={index === 0}
+              isLast={index === node.children.length - 1}
             />
           ))}
         </Box>
