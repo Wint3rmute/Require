@@ -8,9 +8,22 @@ import LandingPage from '@/components/landing_page';
 export default function Home() {
   const [projects, setProjects] = useProjects();
   const [, setCurrentProjectId] = useCurrentProjectId();
+  
+  /**
+   * RACE CONDITION PROTECTION: Prevents duplicate project creation calls
+   * 
+   * PROBLEM: React's development mode (StrictMode) intentionally double-invokes
+   * functions to detect side effects, causing duplicate project creation.
+   * 
+   * SOLUTION: Use a ref-based guard that:
+   * 1. Blocks subsequent calls while one is in progress
+   * 2. Resets after a short delay to allow legitimate future calls
+   * 3. Persists across renders (unlike state) to be truly effective
+   */
   const isCreatingRef = useRef(false);
 
   const handleCreateProject = useCallback((name: string, description?: string, useTemplate?: boolean) => {
+    // GUARD: Prevent duplicate calls from React StrictMode or rapid user clicks
     if (isCreatingRef.current) {
       return;
     }
@@ -21,14 +34,26 @@ export default function Home() {
       ? createCarTemplate(name, description)
       : createNewProject(name, description);
     
+    /**
+     * FUNCTIONAL STATE UPDATE: Critical pattern to avoid stale closures
+     * 
+     * BEFORE (problematic): setProjects([...projects, newProject])
+     * - Uses 'projects' from closure, which may be stale in rapid updates
+     * - Causes race conditions where updates overwrite each other
+     * 
+     * AFTER (fixed): setProjects(prevProjects => [...prevProjects, newProject])
+     * - Always uses the most current state value
+     * - Guarantees atomic updates even in rapid succession
+     */
     setProjects(prevProjects => [...prevProjects, newProject]);
     setCurrentProjectId(newProject.id);
     
-    // Reset the ref after a short delay
+    // Reset guard after brief delay to allow future legitimate calls
+    // 100ms is sufficient to prevent double-calls while allowing normal usage
     setTimeout(() => {
       isCreatingRef.current = false;
     }, 100);
-  }, [setProjects, setCurrentProjectId]);
+  }, [setProjects, setCurrentProjectId]); // Dependencies ensure fresh references
 
   // Show landing page if no projects exist, otherwise show project manager
   if (projects.length === 0) {
