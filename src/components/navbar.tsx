@@ -25,9 +25,7 @@ export default function ButtonAppBar() {
               Require
             </Link>
           </Typography>
-          <Button color="inherit" component={Link} href="/projects">
-            Projects
-          </Button>
+
           <Button color="inherit" component={Link} href="/subsystems">
             Subsystems
           </Button>
