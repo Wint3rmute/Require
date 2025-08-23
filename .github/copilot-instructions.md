@@ -115,6 +115,7 @@ Always manually validate changes by running through these complete user scenario
 3. Run linting after each change: `npm run lint -- --fix`
 4. Manually test affected user workflows (see Validation Scenarios above)
 5. Run final build to ensure no regressions: `npm run build`
+6. If you get a working build, make a commit and push it.
 
 ### Troubleshooting Common Issues
 
