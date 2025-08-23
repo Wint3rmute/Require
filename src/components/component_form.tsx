@@ -121,20 +121,35 @@ export default function ComponentForm({
   };
 
   return (
-    <Paper sx={{ p: 3, maxWidth: 600, mx: 'auto' }}>
+    <Paper sx={{ p: 3, width: '100%' }}>
       <Typography variant="h6" gutterBottom>
         Create Component
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Basic Information */}
-        <TextField
-          label="Component Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          fullWidth
-          required
-        />
+        <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2 }}>
+          <TextField
+            label="Component Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            fullWidth
+            required
+          />
+          
+          <FormControl fullWidth>
+            <InputLabel>Component Type</InputLabel>
+            <Select
+              value={type}
+              label="Component Type"
+              onChange={(e) => setType(e.target.value as ComponentType)}
+            >
+              <MenuItem value="component">Component</MenuItem>
+              <MenuItem value="subsystem">Subsystem</MenuItem>
+              <MenuItem value="system">System</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
 
         <TextField
           label="Description"
@@ -144,19 +159,6 @@ export default function ComponentForm({
           multiline
           rows={2}
         />
-
-        <FormControl fullWidth>
-          <InputLabel>Component Type</InputLabel>
-          <Select
-            value={type}
-            label="Component Type"
-            onChange={(e) => setType(e.target.value as ComponentType)}
-          >
-            <MenuItem value="component">Component</MenuItem>
-            <MenuItem value="subsystem">Subsystem</MenuItem>
-            <MenuItem value="system">System</MenuItem>
-          </Select>
-        </FormControl>
 
         {availableParents.length > 0 && (
           <FormControl fullWidth>
@@ -180,7 +182,7 @@ export default function ComponentForm({
 
         {/* Interfaces Section */}
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
             <Typography variant="h6">
               Interfaces ({componentInterfaces.length})
             </Typography>
@@ -200,8 +202,8 @@ export default function ComponentForm({
           )}
 
           {componentInterfaces.map((iface, index) => (
-            <Paper key={iface.id} sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+            <Paper key={iface.id} sx={{ p: 1.5, mb: 1.5, bgcolor: 'grey.50' }}>
+              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
                 <TextField
                   label="Interface Name"
                   value={iface.name}
