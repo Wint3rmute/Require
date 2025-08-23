@@ -8,13 +8,9 @@ Require is a system modeling and requirements tracing application built with Nex
 
 ## Development Commands
 
-- **Development server**: `npm run dev` (standard webpack, no Turbopack due to typed routes)
-- **Build**: `npm run build`
+- **Build**: `npm run build --turbopack`
 - **Production start**: `npm start`
-- **Lint**: `npm run lint`
-- **Test**: `npm test` (Jest with React Testing Library)
-- **E2E Test**: `npm run test:e2e` (Playwright end-to-end tests)
-- **E2E Test UI**: `npm run test:e2e:ui` (Playwright with interactive UI)
+- **Lint**: `npm run lint -- --fix`
 
 **IMPORTANT**: Always run `npm run lint` and `npm run build` to verify changes before considering work complete.
 
