@@ -40,14 +40,23 @@ interface ComponentFormProps {
   onSubmit: (componentData: Omit<Component, 'id'>) => void;
   onCancel?: () => void;
   defaultPosition?: { x: number; y: number };
+  availableParents?: Component[]; // For parent selection
+  selectedParentId?: string; // Pre-selected parent
 }
 
-export default function ComponentForm({ onSubmit, onCancel, defaultPosition }: ComponentFormProps) {
+export default function ComponentForm({ 
+  onSubmit, 
+  onCancel, 
+  defaultPosition, 
+  availableParents = [],
+  selectedParentId = ''
+}: ComponentFormProps) {
   const [interfaces] = useInterfaces();
   
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<ComponentType>('component');
+  const [parentId, setParentId] = useState(selectedParentId);
   const [componentInterfaces, setComponentInterfaces] = useState<ComponentInterfaceInput[]>([]);
 
   const addInterface = () => {
@@ -92,12 +101,18 @@ export default function ComponentForm({ onSubmit, onCancel, defaultPosition }: C
       componentData.description = description.trim();
     }
 
+    // Add parentId only if it's not empty
+    if (parentId) {
+      componentData.parentId = parentId;
+    }
+
     onSubmit(componentData);
     
     // Reset form
     setName('');
     setDescription('');
     setType('component');
+    setParentId('');
     setComponentInterfaces([]);
   };
 
@@ -106,20 +121,35 @@ export default function ComponentForm({ onSubmit, onCancel, defaultPosition }: C
   };
 
   return (
-    <Paper sx={{ p: 3, maxWidth: 600, mx: 'auto' }}>
+    <Paper sx={{ p: 3, width: '100%' }}>
       <Typography variant="h6" gutterBottom>
         Create Component
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Basic Information */}
-        <TextField
-          label="Component Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          fullWidth
-          required
-        />
+        <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2 }}>
+          <TextField
+            label="Component Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            fullWidth
+            required
+          />
+          
+          <FormControl fullWidth>
+            <InputLabel>Component Type</InputLabel>
+            <Select
+              value={type}
+              label="Component Type"
+              onChange={(e) => setType(e.target.value as ComponentType)}
+            >
+              <MenuItem value="component">Component</MenuItem>
+              <MenuItem value="subsystem">Subsystem</MenuItem>
+              <MenuItem value="system">System</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
 
         <TextField
           label="Description"
@@ -130,24 +160,29 @@ export default function ComponentForm({ onSubmit, onCancel, defaultPosition }: C
           rows={2}
         />
 
-        <FormControl fullWidth>
-          <InputLabel>Component Type</InputLabel>
-          <Select
-            value={type}
-            label="Component Type"
-            onChange={(e) => setType(e.target.value as ComponentType)}
-          >
-            <MenuItem value="component">Component</MenuItem>
-            <MenuItem value="subsystem">Subsystem</MenuItem>
-            <MenuItem value="system">System</MenuItem>
-          </Select>
-        </FormControl>
+        {availableParents.length > 0 && (
+          <FormControl fullWidth>
+            <InputLabel>Parent Component (Optional)</InputLabel>
+            <Select
+              value={parentId}
+              label="Parent Component (Optional)"
+              onChange={(e) => setParentId(e.target.value)}
+            >
+              <MenuItem value="">None (Root Level)</MenuItem>
+              {availableParents.map((component) => (
+                <MenuItem key={component.id} value={component.id}>
+                  {component.name} ({component.type})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
         <Divider />
 
         {/* Interfaces Section */}
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
             <Typography variant="h6">
               Interfaces ({componentInterfaces.length})
             </Typography>
@@ -167,8 +202,8 @@ export default function ComponentForm({ onSubmit, onCancel, defaultPosition }: C
           )}
 
           {componentInterfaces.map((iface, index) => (
-            <Paper key={iface.id} sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+            <Paper key={iface.id} sx={{ p: 1.5, mb: 1.5, bgcolor: 'grey.50' }}>
+              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
                 <TextField
                   label="Interface Name"
                   value={iface.name}

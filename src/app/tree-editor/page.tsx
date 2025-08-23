@@ -9,18 +9,10 @@ import {
   Paper,
   Button,
   Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Alert
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import { Component, ComponentType } from '@/lib/models';
+import { Component } from '@/lib/models';
 import { 
   useProject, 
   useCurrentProjectId, 
@@ -28,6 +20,7 @@ import {
   updateComponentInProject 
 } from '@/lib/storage';
 import TreeNodeComponent from '@/components/tree_node';
+import ComponentForm from '@/components/component_form';
 
 // Extend Component interface to include children for tree display
 interface TreeComponent extends Component {
@@ -38,10 +31,6 @@ const TreeEditorPage = () => {
   const [currentProjectId] = useCurrentProjectId();
   const { project, updateProject } = useProject(currentProjectId || '');
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newComponentName, setNewComponentName] = useState('');
-  const [newComponentType, setNewComponentType] = useState<ComponentType>('component');
-  const [newComponentDescription, setNewComponentDescription] = useState('');
-  const [selectedParentId, setSelectedParentId] = useState<string>('');
 
   // Build hierarchy from flat component list
   const buildHierarchy = (components: Component[]): TreeComponent[] => {
@@ -60,26 +49,13 @@ const TreeEditorPage = () => {
 
   const hierarchicalComponents = project ? buildHierarchy(project.components) : [];
 
-  const handleAddComponent = () => {
-    if (!project || !newComponentName.trim()) return;
+  const handleAddComponent = (componentData: Omit<Component, 'id'>) => {
+    if (!project) return;
 
-    const newComponent: Omit<Component, 'id'> = {
-      name: newComponentName,
-      type: newComponentType,
-      position: { x: 0, y: 0 }, // Default position
-      interfaces: [],
-      ...(newComponentDescription && { description: newComponentDescription }),
-      ...(selectedParentId && { parentId: selectedParentId })
-    };
-
-    const updatedProject = addComponentToProject(project, newComponent);
+    const updatedProject = addComponentToProject(project, componentData);
     updateProject(updatedProject);
     
     // Reset form
-    setNewComponentName('');
-    setNewComponentDescription('');
-    setNewComponentType('component');
-    setSelectedParentId('');
     setShowAddDialog(false);
   };
 
@@ -200,67 +176,13 @@ const TreeEditorPage = () => {
       </Box>
 
       {/* Add Component Dialog */}
-      <Dialog open={showAddDialog} onClose={() => setShowAddDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add New Component</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Component Name"
-            fullWidth
-            variant="outlined"
-            value={newComponentName}
-            onChange={(e) => setNewComponentName(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Component Type</InputLabel>
-            <Select
-              value={newComponentType}
-              label="Component Type"
-              onChange={(e) => setNewComponentType(e.target.value as ComponentType)}
-            >
-              <MenuItem value="system">System</MenuItem>
-              <MenuItem value="subsystem">Subsystem</MenuItem>
-              <MenuItem value="component">Component</MenuItem>
-            </Select>
-          </FormControl>
-
-          <TextField
-            margin="dense"
-            label="Description (Optional)"
-            fullWidth
-            variant="outlined"
-            multiline
-            rows={3}
-            value={newComponentDescription}
-            onChange={(e) => setNewComponentDescription(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-
-          <FormControl fullWidth>
-            <InputLabel>Parent Component (Optional)</InputLabel>
-            <Select
-              value={selectedParentId}
-              label="Parent Component (Optional)"
-              onChange={(e) => setSelectedParentId(e.target.value)}
-            >
-              <MenuItem value="">None (Root Level)</MenuItem>
-              {project.components.map((component) => (
-                <MenuItem key={component.id} value={component.id}>
-                  {component.name} ({component.type})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowAddDialog(false)}>Cancel</Button>
-          <Button onClick={handleAddComponent} variant="contained" disabled={!newComponentName.trim()}>
-            Add Component
-          </Button>
-        </DialogActions>
+      <Dialog open={showAddDialog} onClose={() => setShowAddDialog(false)} maxWidth="md" fullWidth>
+        <ComponentForm 
+          onSubmit={handleAddComponent}
+          onCancel={() => setShowAddDialog(false)}
+          defaultPosition={{ x: 0, y: 0 }}
+          availableParents={project?.components || []}
+        />
       </Dialog>
     </Container>
   );
