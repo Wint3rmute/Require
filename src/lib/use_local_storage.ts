@@ -1,4 +1,4 @@
-import { useState, useEffect, Dispatch, SetStateAction, useCallback } from "react";
+import { useState, Dispatch, SetStateAction, useCallback } from "react";
 
 function getStorageValue<T>(key: string, defaultValue: T): T {
   if (typeof window === "undefined") {
@@ -57,15 +57,6 @@ export const useLocalStorage = <T>(
       return newValue;
     });
   }, [key]);
-
-  // LEGACY PERSISTENCE: Keep useEffect for backward compatibility
-  // This is now redundant due to immediate persistence above, but maintained
-  // to ensure consistency in edge cases where the setter isn't used directly
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
-  }, [key, value]);
 
   return [value, setValueAndPersist];
 };
