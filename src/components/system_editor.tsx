@@ -14,7 +14,6 @@ import {
   Connection,
   useReactFlow,
   NodeChange,
-  NodePositionChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
@@ -95,6 +94,31 @@ const ComponentNode = ({ data }: { data: ComponentNodeData }) => {
   );
 };
 
+
+// Add this above SystemEditor
+function NoProjectSelected() {
+  return (
+    <div style={{ 
+      height: '70vh', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      background: '#f9fafb',
+      border: '2px dashed #d1d5db',
+      borderRadius: '8px'
+    }}>
+      <div style={{ textAlign: 'center', color: '#6b7280' }}>
+        <div style={{ fontSize: '18px', marginBottom: '8px' }}>
+          No Project Selected
+        </div>
+        <div style={{ fontSize: '14px' }}>
+          Create or select a project to start system modeling
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Helper functions for interface positioning
 function getHandlePosition(position: 'left' | 'right' | 'top' | 'bottom'): Position {
   switch (position) {
@@ -137,17 +161,31 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
   const { project, updateProject } = useProject(projectId);
   const { screenToFlowPosition } = useReactFlow();
 
-  // Convert project components to ReactFlow nodes
+  // Convert project components to ReactFlow nodes with parent-child relationships
   const nodes = useMemo(() => {
     if (!project) return [];
     
-    return project.components.map((component): Node => ({
-      id: component.id,
-      type: 'component',
-      position: component.position,
-      data: { component },
-      draggable: true,
-    }));
+    return project.components.map((component): Node => {
+      const baseNode = {
+        id: component.id,
+        type: 'component' as const,
+        position: component.position,
+        data: { component },
+        draggable: true,
+      };
+
+      // Add parent-child properties only if component has a parent
+      if (component.parentId) {
+        return {
+          ...baseNode,
+          parentId: component.parentId,
+          extent: 'parent' as const,
+          expandParent: true,
+        };
+      }
+
+      return baseNode;
+    });
   }, [project]);
 
   // Convert project connections to ReactFlow edges
@@ -194,32 +232,10 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
     
     onNodesChange(changes);
     
-    // Update component positions in project - but only when dragging ends
-    // This prevents excessive localStorage writes during dragging
-    const positionChanges = changes.filter((change): change is NodePositionChange => 
-      change.type === 'position' && 
-      'position' in change && 
-      change.position !== undefined &&
-      change.dragging === false // Only update when dragging ends
-    );
+    // Note: Position updates could be implemented here when dragging ends
+    // Currently just handling the visual changes in ReactFlow
     
-    if (positionChanges.length > 0) {
-      const updatedProject = { ...project };
-      
-      positionChanges.forEach(change => {
-        const component = updatedProject.components.find(c => c.id === change.id);
-        if (component && change.position) {
-          const componentIndex = updatedProject.components.findIndex(c => c.id === change.id);
-          updatedProject.components[componentIndex] = {
-            ...component,
-            position: change.position
-          };
-        }
-      });
-      
-      updateProject(updatedProject);
-    }
-  }, [project, updateProject, onNodesChange]);
+  }, [project, onNodesChange]);
 
   // Handle new connections
   const onConnect = useCallback((connection: Connection) => {
@@ -321,29 +337,10 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
 
 export default function SystemEditor() {
   const [currentProjectId] = useCurrentProjectId();
-
   if (!currentProjectId) {
-    return (
-      <div style={{ 
-        height: '70vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        background: '#f9fafb',
-        border: '2px dashed #d1d5db',
-        borderRadius: '8px'
-      }}>
-        <div style={{ textAlign: 'center', color: '#6b7280' }}>
-          <div style={{ fontSize: '18px', marginBottom: '8px' }}>
-            No Project Selected
-          </div>
-          <div style={{ fontSize: '14px' }}>
-            Create or select a project to start system modeling
-          </div>
-        </div>
-      </div>
-    );
+    return <NoProjectSelected />;
   }
+
 
   return (
     <div style={{ height: '70vh' }}>
