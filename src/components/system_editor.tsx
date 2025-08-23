@@ -1,7 +1,27 @@
 
 'use client';
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { 
+  Box, 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem, 
+  Toolbar, 
+  Typography, 
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Checkbox,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText
+} from '@mui/material';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -27,9 +47,11 @@ import {
   DEFAULT_COMPONENT_SIZE,
   getCurrentSystemView,
   updateComponentPositionInSystemView,
-  ensureProjectHasSystemViews
+  ensureProjectHasSystemViews,
+  setCurrentSystemView,
+  addSystemViewToProject
 } from '@/lib/storage';
-import { Component, getComponentPosition, isComponentVisible } from '@/lib/models';
+import { Component, getComponentPosition, isComponentVisible, createEmptySystemView } from '@/lib/models';
 
 // ========================================
 // Custom Node Components
@@ -139,6 +161,12 @@ interface SystemEditorFlowProps {
 function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
   const { project, updateProject } = useProject(projectId);
   const { screenToFlowPosition } = useReactFlow();
+
+  // SystemView dialog state
+  const [showSystemViewDialog, setShowSystemViewDialog] = useState(false);
+  const [newViewName, setNewViewName] = useState('');
+  const [newViewDescription, setNewViewDescription] = useState('');
+  const [selectedComponents, setSelectedComponents] = useState<string[]>([]);
 
   // Ensure project has system views (migration helper)
   const migratedProject = useMemo(() => {
@@ -310,6 +338,78 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
     updateProject(updatedProject);
   }, [migratedProject, currentSystemView, updateProject, screenToFlowPosition]);
 
+  // Handle SystemView switching
+  const handleSystemViewChange = useCallback((systemViewId: string) => {
+    if (!migratedProject) return;
+    
+    const updatedProject = setCurrentSystemView(migratedProject, systemViewId);
+    updateProject(updatedProject);
+  }, [migratedProject, updateProject]);
+
+  // Handle SystemView creation
+  const handleCreateSystemView = useCallback(() => {
+    if (!migratedProject || !newViewName.trim()) return;
+
+    // Create positions for selected components in a grid layout
+    const componentPositions: Record<string, { x: number; y: number }> = {};
+    selectedComponents.forEach((componentId, index) => {
+      const cols = Math.ceil(Math.sqrt(selectedComponents.length));
+      const row = Math.floor(index / cols);
+      const col = index % cols;
+      componentPositions[componentId] = {
+        x: col * 250 + 100,
+        y: row * 150 + 100
+      };
+    });
+
+    // Get all interfaces for selected components
+    const visibleInterfaces = migratedProject.components
+      .filter(c => selectedComponents.includes(c.id))
+      .flatMap(c => c.interfaces.map(i => i.id));
+
+    const newSystemView = createEmptySystemView(
+      migratedProject.id,
+      newViewName.trim(),
+      newViewDescription.trim() || undefined
+    );
+
+    // Update the system view with selected components and positions
+    newSystemView.componentPositions = componentPositions;
+    newSystemView.visibleComponents = selectedComponents;
+    newSystemView.visibleInterfaces = visibleInterfaces;
+
+    const updatedProject = addSystemViewToProject(migratedProject, newSystemView);
+    
+    // Switch to the new view
+    const finalProject = setCurrentSystemView(updatedProject, newSystemView.id);
+    updateProject(finalProject);
+
+    // Reset dialog state
+    setShowSystemViewDialog(false);
+    setNewViewName('');
+    setNewViewDescription('');
+    setSelectedComponents([]);
+  }, [migratedProject, newViewName, newViewDescription, selectedComponents, updateProject]);
+
+  // Handle opening the create dialog
+  const handleOpenCreateDialog = useCallback(() => {
+    if (!migratedProject) return;
+    
+    setNewViewName('');
+    setNewViewDescription('');
+    setSelectedComponents(migratedProject.components.map(c => c.id)); // Select all by default
+    setShowSystemViewDialog(true);
+  }, [migratedProject]);
+
+  // Handle component selection in dialog
+  const handleComponentToggle = useCallback((componentId: string) => {
+    setSelectedComponents(prev => 
+      prev.includes(componentId)
+        ? prev.filter(id => id !== componentId)
+        : [...prev, componentId]
+    );
+  }, []);
+
   if (!migratedProject) {
     return (
       <div style={{ 
@@ -325,21 +425,128 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
   }
 
   return (
-    <ReactFlow
-      nodes={reactFlowNodes}
-      edges={reactFlowEdges}
-      onNodesChange={handleNodesChange}
-      onEdgesChange={onEdgesChange}
-      nodeTypes={nodeTypes}
-      onConnect={onConnect}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      fitView
-      fitViewOptions={{ padding: 0.2 }}
-    >
-      <Controls />
-      <Background />
-    </ReactFlow>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* SystemView Selector Toolbar */}
+      <Toolbar variant="dense" sx={{ borderBottom: 1, borderColor: 'divider', minHeight: '48px' }}>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          System Model
+        </Typography>
+        
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>System View</InputLabel>
+          <Select
+            value={currentSystemView?.id || ''}
+            label="System View"
+            onChange={(e) => handleSystemViewChange(e.target.value)}
+          >
+            {migratedProject.systemViews?.map((view) => (
+              <MenuItem key={view.id} value={view.id}>
+                {view.name} ({view.visibleComponents.length} components)
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        
+        <Button 
+          size="small" 
+          sx={{ ml: 1 }}
+          onClick={handleOpenCreateDialog}
+        >
+          New View
+        </Button>
+      </Toolbar>
+
+      {/* ReactFlow Diagram */}
+      <Box sx={{ flex: 1 }}>
+        <ReactFlow
+          nodes={reactFlowNodes}
+          edges={reactFlowEdges}
+          onNodesChange={handleNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
+          onConnect={onConnect}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          fitView
+          fitViewOptions={{ padding: 0.2 }}
+        >
+          <Controls />
+          <Background />
+        </ReactFlow>
+      </Box>
+
+      {/* SystemView Creation Dialog */}
+      <Dialog 
+        open={showSystemViewDialog} 
+        onClose={() => setShowSystemViewDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Create New System View</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="View Name"
+              fullWidth
+              variant="outlined"
+              value={newViewName}
+              onChange={(e) => setNewViewName(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              margin="dense"
+              label="Description (Optional)"
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={2}
+              value={newViewDescription}
+              onChange={(e) => setNewViewDescription(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              Select Components to Show:
+            </Typography>
+            <List dense sx={{ maxHeight: 200, overflow: 'auto' }}>
+              {migratedProject?.components.map((component) => (
+                <ListItem 
+                  key={component.id} 
+                  onClick={() => handleComponentToggle(component.id)}
+                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'action.hover' } }}
+                >
+                  <ListItemIcon>
+                    <Checkbox
+                      edge="start"
+                      checked={selectedComponents.includes(component.id)}
+                      tabIndex={-1}
+                      disableRipple
+                    />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={component.name}
+                    secondary={component.description || `${component.type} component`}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowSystemViewDialog(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleCreateSystemView}
+            variant="contained"
+            disabled={!newViewName.trim() || selectedComponents.length === 0}
+          >
+            Create View
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }
 
