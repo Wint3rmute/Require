@@ -90,6 +90,7 @@ Always manually validate changes by running through these complete user scenario
 
 - **Project**: Top-level container with components and connections
 - **Component**: System elements with interfaces and hierarchy (parentId)
+  - **Simplified Types**: 'system' (root only) | 'component' (everything else)
 - **Interface**: Reusable interface definitions (UART, CAN, USB-C, etc.)
 - **Connection**: Links between component interfaces
 
@@ -100,6 +101,7 @@ Always manually validate changes by running through these complete user scenario
 - `npm ci` - Install dependencies (30 seconds)
 - `npm run build` - Production build with Turbopack
 - `npm run lint -- --fix` - Run ESLint
+- `npm run test` - Run Jest test suite
 
 ### Code Style & Standards
 
@@ -113,9 +115,10 @@ Always manually validate changes by running through these complete user scenario
 1. Always build first to check baseline: `npm run build`
 2. Make incremental changes and test in browser
 3. Run linting after each change: `npm run lint -- --fix`
-4. Manually test affected user workflows (see Validation Scenarios above)
-5. Run final build to ensure no regressions: `npm run build`
-6. If you get a working build, make a commit and push it.
+4. Run tests if modifying core logic: `npm run test`
+5. Manually test affected user workflows (see Validation Scenarios above)
+6. Run final build to ensure no regressions: `npm run build`
+7. If you get a working build, make a commit and push it.
 
 ### Troubleshooting Common Issues
 
@@ -146,6 +149,6 @@ Always manually validate changes by running through these complete user scenario
 - No component reusability yet
 - Interface compatibility checking implemented
 - System completeness metrics available
-- No tests currently - manually validate all changes
+- **Testing**: Jest test suite covering core functionality
 
 Always validate your changes work by running through the complete user scenarios above. The application should remain fully functional after any modifications.
