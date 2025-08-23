@@ -32,14 +32,14 @@ import {
 import { CreateProjectDialog } from './project_manager';
 
 interface LandingPageProps {
-  onCreateProject: (name: string, description?: string) => void;
+  onCreateProject: (name: string, description?: string, useTemplate?: boolean) => void;
 }
 
 export default function LandingPage({ onCreateProject }: LandingPageProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const handleCreateProject = (name: string, description?: string) => {
-    onCreateProject(name, description);
+  const handleCreateProject = (name: string, description?: string, useTemplate?: boolean) => {
+    onCreateProject(name, description, useTemplate);
     setCreateDialogOpen(false);
   };
 

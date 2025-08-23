@@ -27,6 +27,9 @@ import {
   Grid,
   Chip,
   IconButton,
+  FormControlLabel,
+  Checkbox,
+  Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -36,6 +39,7 @@ import {
   useProjects,
   useCurrentProjectId,
   createNewProject,
+  createCarTemplate,
   calculateProjectCompleteness,
   findOrphanedComponents,
   getCompatibilityIssues
@@ -144,7 +148,7 @@ function ProjectCard({ project, isSelected, onSelect, onDelete, onEdit }: Projec
 export interface CreateProjectDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (name: string, description?: string) => void;
+  onSubmit: (name: string, description?: string, useTemplate?: boolean) => void;
 }
 
 interface EditProjectDialogProps {
@@ -158,12 +162,14 @@ interface EditProjectDialogProps {
 export function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [useTemplate, setUseTemplate] = useState(false);
 
   const handleSubmit = () => {
     if (name.trim()) {
-      onSubmit(name.trim(), description.trim() || undefined);
+      onSubmit(name.trim(), description.trim() || undefined, useTemplate);
       setName('');
       setDescription('');
+      setUseTemplate(false);
       onClose();
     }
   };
@@ -191,7 +197,27 @@ export function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDi
           variant="outlined"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          sx={{ mb: 2 }}
         />
+        
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={useTemplate}
+              onChange={(e) => setUseTemplate(e.target.checked)}
+            />
+          }
+          label="Use Car Template"
+          sx={{ mb: 1 }}
+        />
+        
+        {useTemplate && (
+          <Alert severity="info" sx={{ mt: 1 }}>
+            Creates a project with automotive components including Engine, Transmission, 
+            Electrical System, Braking, Steering, Infotainment, and Body Control modules 
+            to help you explore the system modeling features.
+          </Alert>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
@@ -270,8 +296,10 @@ export default function ProjectManager() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
 
-  const handleCreateProject = (name: string, description?: string) => {
-    const newProject = createNewProject(name, description);
+  const handleCreateProject = (name: string, description?: string, useTemplate?: boolean) => {
+    const newProject = useTemplate 
+      ? createCarTemplate(name, description)
+      : createNewProject(name, description);
     setProjects([...projects, newProject]);
     setCurrentProjectId(newProject.id);
   };
