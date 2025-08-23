@@ -5,18 +5,18 @@ const fs = require('node:fs')
 
 const env = { ...process.env }
 
-;(async() => {
-  // If running the web server then migrate existing database
-  if (process.argv.slice(-3).join(' ') === 'npm run start') {
-    const url = new URL(process.env.DATABASE_URL)
-    const target = url.protocol === 'file:' && url.pathname
-    await exec('npx prisma migrate deploy')
-    await exec('npx next build --experimental-build-mode generate')
-  }
+  ; (async () => {
+    // If running the web server then migrate existing database
+    if (process.argv.slice(-3).join(' ') === 'npm run start') {
+      const url = new URL(process.env.DATABASE_URL)
+      const target = url.protocol === 'file:' && url.pathname
+      await exec('npx prisma migrate deploy')
+      // await exec('npx next build --experimental-build-mode generate')
+    }
 
-  // launch application
-  await exec(process.argv.slice(2).join(' '))
-})()
+    // launch application
+    await exec(process.argv.slice(2).join(' '))
+  })()
 
 function exec(command) {
   const child = spawn(command, { shell: true, stdio: 'inherit', env })
