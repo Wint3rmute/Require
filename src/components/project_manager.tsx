@@ -23,12 +23,14 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  DialogContentText,
   Grid,
   Chip,
   IconButton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import FolderIcon from '@mui/icons-material/Folder';
 import {
   useProjects,
@@ -45,9 +47,10 @@ interface ProjectCardProps {
   isSelected: boolean;
   onSelect: (projectId: string) => void;
   onDelete: (projectId: string) => void;
+  onEdit: (projectId: string) => void;
 }
 
-function ProjectCard({ project, isSelected, onSelect, onDelete }: ProjectCardProps) {
+function ProjectCard({ project, isSelected, onSelect, onDelete, onEdit }: ProjectCardProps) {
   const completeness = calculateProjectCompleteness(project);
   const orphanedComponents = findOrphanedComponents(project);
   const compatibilityIssues = getCompatibilityIssues(project);
@@ -117,6 +120,16 @@ function ProjectCard({ project, isSelected, onSelect, onDelete }: ProjectCardPro
           size="small" 
           onClick={(e) => {
             e.stopPropagation();
+            onEdit(project.id);
+          }}
+          color="primary"
+        >
+          <EditIcon />
+        </IconButton>
+        <IconButton 
+          size="small" 
+          onClick={(e) => {
+            e.stopPropagation();
             onDelete(project.id);
           }}
           color="error"
@@ -132,6 +145,14 @@ interface CreateProjectDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (name: string, description?: string) => void;
+}
+
+interface EditProjectDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (name: string, description?: string) => void;
+  initialName: string;
+  initialDescription: string;
 }
 
 function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDialogProps) {
@@ -182,10 +203,72 @@ function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDialogPro
   );
 }
 
+function EditProjectDialog({ open, onClose, onSubmit, initialName, initialDescription }: EditProjectDialogProps) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+
+  // Reset form when dialog opens with initial values
+  React.useEffect(() => {
+    if (open) {
+      setName(initialName);
+      setDescription(initialDescription);
+    }
+  }, [open, initialName, initialDescription]);
+
+  const handleSubmit = () => {
+    if (name.trim()) {
+      onSubmit(name.trim(), description.trim() || undefined);
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Edit Project</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Project Name"
+          fullWidth
+          variant="outlined"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          margin="dense"
+          label="Description (Optional)"
+          fullWidth
+          multiline
+          rows={3}
+          variant="outlined"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSubmit} variant="contained" disabled={!name.trim()}>
+          Save Changes
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 export default function ProjectManager() {
   const [projects, setProjects] = useProjects();
   const [currentProjectId, setCurrentProjectId] = useCurrentProjectId();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  
+  // State for deletion confirmation
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  
+  // State for editing
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
 
   const handleCreateProject = (name: string, description?: string) => {
     const newProject = createNewProject(name, description);
@@ -197,14 +280,54 @@ export default function ProjectManager() {
     setCurrentProjectId(projectId);
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    const updatedProjects = projects.filter(p => p.id !== projectId);
-    setProjects(updatedProjects);
-    
-    // If we deleted the current project, clear the selection
-    if (currentProjectId === projectId) {
-      setCurrentProjectId(null);
+  const handleDeleteClick = (projectId: string) => {
+    setProjectToDelete(projectId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (projectToDelete) {
+      const updatedProjects = projects.filter(p => p.id !== projectToDelete);
+      setProjects(updatedProjects);
+      
+      // If we deleted the current project, clear the selection
+      if (currentProjectId === projectToDelete) {
+        setCurrentProjectId(null);
+      }
     }
+    setDeleteDialogOpen(false);
+    setProjectToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setProjectToDelete(null);
+  };
+
+  const handleEditClick = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (project) {
+      setProjectToEdit(project);
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleEditSubmit = (name: string, description?: string) => {
+    if (projectToEdit) {
+      const updatedProjects = projects.map(p => 
+        p.id === projectToEdit.id 
+          ? { ...p, name, ...(description ? { description } : {}) } 
+          : p
+      );
+      setProjects(updatedProjects);
+    }
+    setEditDialogOpen(false);
+    setProjectToEdit(null);
+  };
+
+  const handleEditCancel = () => {
+    setEditDialogOpen(false);
+    setProjectToEdit(null);
   };
 
   return (
@@ -216,7 +339,7 @@ export default function ProjectManager() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => setDialogOpen(true)}
+          onClick={() => setCreateDialogOpen(true)}
         >
           New Project
         </Button>
@@ -238,7 +361,7 @@ export default function ProjectManager() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => setDialogOpen(true)}
+            onClick={() => setCreateDialogOpen(true)}
           >
             Create First Project
           </Button>
@@ -251,7 +374,8 @@ export default function ProjectManager() {
                 project={project}
                 isSelected={currentProjectId === project.id}
                 onSelect={handleSelectProject}
-                onDelete={handleDeleteProject}
+                onDelete={handleDeleteClick}
+                onEdit={handleEditClick}
               />
             </Grid>
           ))}
@@ -259,10 +383,40 @@ export default function ProjectManager() {
       )}
 
       <CreateProjectDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
         onSubmit={handleCreateProject}
       />
+
+      <EditProjectDialog
+        open={editDialogOpen}
+        onClose={handleEditCancel}
+        onSubmit={handleEditSubmit}
+        initialName={projectToEdit?.name || ''}
+        initialDescription={projectToEdit?.description || ''}
+      />
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete this project? This action cannot be undone and will remove all components and connections.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
