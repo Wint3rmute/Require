@@ -141,7 +141,7 @@ function ProjectCard({ project, isSelected, onSelect, onDelete, onEdit }: Projec
   );
 }
 
-interface CreateProjectDialogProps {
+export interface CreateProjectDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (name: string, description?: string) => void;
@@ -155,7 +155,7 @@ interface EditProjectDialogProps {
   initialDescription: string;
 }
 
-function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDialogProps) {
+export function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
