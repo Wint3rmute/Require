@@ -14,11 +14,9 @@ import {
   Component, 
   Connection, 
   Interface,
-  CompatibilityRule,
-  DEFAULT_COMPATIBILITY_RULES,
   generateId,
   checkInterfaceCompatibility
-} from './data-models';
+} from './models';
 
 // ========================================
 // Storage Keys
@@ -27,7 +25,6 @@ import {
 export const STORAGE_KEYS = {
   PROJECTS: 'require_projects',
   INTERFACES: 'require_interfaces', // Reuse existing key
-  COMPATIBILITY_RULES: 'require_compatibility_rules',
   CURRENT_PROJECT_ID: 'require_current_project_id',
 } as const;
 
@@ -62,13 +59,6 @@ export function useInterfaces() {
  */
 export function useProjects() {
   return useLocalStorage<Project[]>(STORAGE_KEYS.PROJECTS, DEFAULT_PROJECTS);
-}
-
-/**
- * Hook for managing compatibility rules
- */
-export function useCompatibilityRules() {
-  return useLocalStorage<CompatibilityRule[]>(STORAGE_KEYS.COMPATIBILITY_RULES, DEFAULT_COMPATIBILITY_RULES);
 }
 
 /**
@@ -184,7 +174,7 @@ export function removeComponentFromProject(
 export function addInterfaceToComponent(
   project: Project,
   componentId: string,
-  interfaceData: Omit<import('./data-models').ComponentInterface, 'id' | 'componentId' | 'isConnected'>
+  interfaceData: Omit<import('./models').ComponentInterface, 'id' | 'componentId' | 'isConnected'>
 ): Project {
   return updateComponentInProject(project, componentId, {
     interfaces: [
@@ -207,8 +197,7 @@ export function createConnection(
   sourceComponentId: string,
   sourceInterfaceId: string,
   targetComponentId: string,
-  targetInterfaceId: string,
-  compatibilityRules: CompatibilityRule[] = DEFAULT_COMPATIBILITY_RULES
+  targetInterfaceId: string
 ): Project {
   const sourceInterface = project.components
     .find(c => c.id === sourceComponentId)
@@ -225,8 +214,7 @@ export function createConnection(
   const connectionId = generateId();
   const compatibilityStatus = checkInterfaceCompatibility(
     sourceInterface.interfaceDefinitionId,
-    targetInterface.interfaceDefinitionId,
-    compatibilityRules
+    targetInterface.interfaceDefinitionId
   );
   
   const newConnection: Connection = {
@@ -397,7 +385,6 @@ export const RequireStorage = {
   // Hooks
   useInterfaces,
   useProjects,
-  useCompatibilityRules,
   useCurrentProjectId,
   useProject,
   
@@ -420,5 +407,5 @@ export const RequireStorage = {
   STORAGE_KEYS
 };
 
-// Re-export from data-models for convenience
-export { generateId, DEFAULT_COMPONENT_SIZE } from './data-models';
+// Re-export from models for convenience
+export { generateId, DEFAULT_COMPONENT_SIZE } from './models';

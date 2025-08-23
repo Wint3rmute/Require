@@ -65,17 +65,6 @@ export interface Interface {
 }
 
 // ========================================
-// Simple Compatibility
-// ========================================
-
-export interface CompatibilityRule {
-  sourceInterfaceId: string;
-  targetInterfaceId: string;
-  isCompatible: boolean;
-  message?: string;
-}
-
-// ========================================
 // Utility Types
 // ========================================
 
@@ -90,29 +79,15 @@ export type CompatibilityStatus = 'compatible' | 'incompatible' | 'unknown';
 export const DEFAULT_COMPONENT_SIZE = { width: 200, height: 100 };
 export const DEFAULT_INTERFACE_SPACING = 30;
 
-// Simple compatibility checker - can be expanded later
-export const DEFAULT_COMPATIBILITY_RULES: CompatibilityRule[] = [
-  { sourceInterfaceId: 'usbc', targetInterfaceId: 'usbc', isCompatible: true },
-  { sourceInterfaceId: 'uart', targetInterfaceId: 'uart', isCompatible: true },
-  { sourceInterfaceId: 'can', targetInterfaceId: 'can', isCompatible: true },
-  { sourceInterfaceId: 'i2c', targetInterfaceId: 'i2c', isCompatible: true },
-  { sourceInterfaceId: 'spi', targetInterfaceId: 'spi', isCompatible: true },
-  { sourceInterfaceId: 'ethernet', targetInterfaceId: 'ethernet', isCompatible: true },
-];
-
-// Helper function to check compatibility
+// Simple compatibility checker - just check if interface names match
 export function checkInterfaceCompatibility(
-  sourceInterfaceId: string, 
-  targetInterfaceId: string,
-  rules: CompatibilityRule[] = DEFAULT_COMPATIBILITY_RULES
+  sourceInterfaceName: string, 
+  targetInterfaceName: string
 ): CompatibilityStatus {
-  const rule = rules.find(r => 
-    (r.sourceInterfaceId === sourceInterfaceId && r.targetInterfaceId === targetInterfaceId) ||
-    (r.sourceInterfaceId === targetInterfaceId && r.targetInterfaceId === sourceInterfaceId)
-  );
-  
-  if (!rule) return 'unknown';
-  return rule.isCompatible ? 'compatible' : 'incompatible';
+  if (sourceInterfaceName === targetInterfaceName) {
+    return 'compatible';
+  }
+  return 'incompatible';
 }
 
 // Helper to generate unique IDs

@@ -26,7 +26,7 @@ import {
   generateId,
   DEFAULT_COMPONENT_SIZE
 } from '@/lib/storage';
-import { Component } from '@/lib/data-models';
+import { Component } from '@/lib/models';
 
 // ========================================
 // Custom Node Components

@@ -7,7 +7,7 @@ This repository is a system modeling and requirements tracing app built with Nex
 - **Build**: `npm run build`
 - **Lint**: `npm run lint -- --fix`
 
-> Always lint and build before submitting changes.
+Always lint and build before submitting changes!
 
 ## Tech Stack
 
@@ -25,7 +25,6 @@ This repository is a system modeling and requirements tracing app built with Nex
 
 - **Linting**: ESLint (Next.js rules, no `any` types)
 - **TypeScript**: Strict, path alias `@/*` → `src/*`
-- **Testing**: 100% coverage required for components/pages
 - **Styling**: Material-UI, Emotion, CSS Modules
 
 ## Notes

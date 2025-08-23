@@ -6,40 +6,34 @@
    - Environments: .env
 
    Creating an optimized production build ...
- ✓ Finished writing to disk in 26ms
- ✓ Compiled successfully in 5.3s
+ ✓ Finished writing to disk in 14ms
+ ✓ Compiled successfully in 4.5s
    Linting and checking validity of types ...
    Collecting page data ...
-   Generating static pages (0/9) ...
-   Generating static pages (2/9) 
-Get projects:  [ { id: 1, name: 'Car' } ]
-   Generating static pages (4/9) 
-   Generating static pages (6/9) 
- ✓ Generating static pages (9/9)
+   Generating static pages (0/8) ...
+   Generating static pages (2/8) 
+   Generating static pages (4/8) 
+   Generating static pages (6/8) 
+ ✓ Generating static pages (8/8)
    Finalizing page optimization ...
    Collecting build traces ...
 
-Route (app)                                     Size  First Load JS
-┌ ○ /                                        6.29 kB         222 kB
-├ ○ /_not-found                                  0 B         157 kB
-├ ○ /interfaces                              9.92 kB         243 kB
-├ ○ /projects                                5.64 kB         163 kB
-├ ƒ /projects/[project_name]                     0 B         157 kB
-├ ƒ /projects/[project_name]/interfaces/new  2.65 kB         235 kB
-├ ƒ /projects/[project_name]/subsystems      9.97 kB         189 kB
-├ ○ /system-model                            6.64 kB         244 kB
-└ ○ /tree-editor                              4.6 kB         184 kB
-+ First Load JS shared by all                 158 kB
-  ├ chunks/126280db106511e5.js               17.2 kB
-  ├ chunks/38618d51a0ba09c2.js               34.7 kB
-  ├ chunks/773bd2e5d71e6790.js               10.1 kB
-  ├ chunks/9462534cadc3d992.js               18.8 kB
-  ├ chunks/d00682effa77e323.js               59.1 kB
-  └ other shared chunks (total)              18.3 kB
+Route (app)                         Size  First Load JS
+┌ ○ /                            6.29 kB         222 kB
+├ ○ /_not-found                      0 B         157 kB
+├ ○ /interfaces                  61.4 kB         244 kB
+├ ○ /system-model                4.44 kB         245 kB
+└ ○ /tree-editor                 27.5 kB         185 kB
++ First Load JS shared by all     158 kB
+  ├ chunks/126280db106511e5.js   17.2 kB
+  ├ chunks/31168a91dc4e815d.js   10.2 kB
+  ├ chunks/42748a14087b9f63.js   34.6 kB
+  ├ chunks/9462534cadc3d992.js   18.8 kB
+  ├ chunks/d00682effa77e323.js   59.1 kB
+  └ other shared chunks (total)  18.3 kB
 
 
-○  (Static)   prerendered as static content
-ƒ  (Dynamic)  server-rendered on demand
+○  (Static)  prerendered as static content
 
  ⚠ Support for Turbopack builds is experimental. We don't recommend deploying mission-critical applications to production.
 

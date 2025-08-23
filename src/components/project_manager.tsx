@@ -38,7 +38,7 @@ import {
   findOrphanedComponents,
   getCompatibilityIssues
 } from '@/lib/storage';
-import { Project } from '@/lib/data-models';
+import { Project } from '@/lib/models';
 
 interface ProjectCardProps {
   project: Project;
