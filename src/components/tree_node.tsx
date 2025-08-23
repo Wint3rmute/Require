@@ -3,13 +3,18 @@
 
 import React, { useState } from 'react';
 import { Component } from '@/lib/models';
+import { useInterfaces } from '@/lib/storage';
 import { 
   Box, 
   IconButton, 
   TextField, 
   Typography, 
   Chip,
-  Tooltip 
+  Tooltip,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
 import { 
   Delete, 
@@ -48,6 +53,8 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(component.name);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [interfacesExpanded, setInterfacesExpanded] = useState(false);
+  const [interfaces] = useInterfaces();
 
   const handleUpdate = () => {
     if (newName.trim() !== component.name) {
@@ -75,6 +82,11 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({
 
   const hasChildren = component.children && component.children.length > 0;
   const interfaceCount = component.interfaces?.length || 0;
+
+  // Helper function to get interface definition from global interfaces
+  const getInterfaceDefinition = (interfaceDefinitionId: string) => {
+    return interfaces.find(iface => iface.id === interfaceDefinitionId);
+  };
 
   return (
     <Box sx={{ pl: 2, borderLeft: '1px solid #e0e0e0', mb: 1 }}>
@@ -125,12 +137,14 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({
                 variant="outlined"
               />
               {interfaceCount > 0 && (
-                <Tooltip title={`${interfaceCount} interface${interfaceCount !== 1 ? 's' : ''}`}>
+                <Tooltip title={`${interfaceCount} interface${interfaceCount !== 1 ? 's' : ''} - click to ${interfacesExpanded ? 'hide' : 'show'}`}>
                   <Chip 
                     icon={<Cable />}
                     label={interfaceCount} 
                     size="small" 
                     variant="outlined"
+                    onClick={() => setInterfacesExpanded(!interfacesExpanded)}
+                    sx={{ cursor: 'pointer' }}
                   />
                 </Tooltip>
               )}
@@ -184,6 +198,42 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({
           <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
             {component.description}
           </Typography>
+        </Box>
+      )}
+
+      {/* Interfaces List */}
+      {interfacesExpanded && interfaceCount > 0 && (
+        <Box sx={{ pl: 4, pb: 1 }}>
+          <Typography variant="body2" color="text.primary" sx={{ fontWeight: 500, mb: 1 }}>
+            Interfaces:
+          </Typography>
+          <List dense sx={{ pt: 0 }}>
+            {component.interfaces.map((componentInterface) => {
+              const interfaceDefinition = getInterfaceDefinition(componentInterface.interfaceDefinitionId);
+              return (
+                <ListItem key={componentInterface.id} sx={{ py: 0.25, pl: 2 }}>
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <Cable sx={{ fontSize: 16 }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={componentInterface.name}
+                    secondary={interfaceDefinition?.name || 'Unknown Interface'}
+                    primaryTypographyProps={{ variant: 'body2' }}
+                    secondaryTypographyProps={{ variant: 'caption' }}
+                  />
+                  {componentInterface.isConnected && (
+                    <Chip 
+                      label="Connected" 
+                      size="small" 
+                      color="success" 
+                      variant="outlined"
+                      sx={{ height: 16, fontSize: '0.65rem' }}
+                    />
+                  )}
+                </ListItem>
+              );
+            })}
+          </List>
         </Box>
       )}
 
