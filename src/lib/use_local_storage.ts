@@ -1,4 +1,4 @@
-import { useState, useEffect, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, Dispatch, SetStateAction, useCallback } from "react";
 
 function getStorageValue<T>(key: string, defaultValue: T): T {
   if (typeof window === "undefined") {
@@ -24,11 +24,48 @@ export const useLocalStorage = <T>(
     return getStorageValue(key, defaultValue);
   });
 
+  /**
+   * Enhanced setter that immediately persists data to localStorage.
+   * 
+   * CRITICAL FIX: This addresses a race condition where rapid state updates
+   * (like double function calls in React dev mode) would cause data loss.
+   * The original version only persisted in useEffect after render, which
+   * created timing issues with fast successive updates.
+   * 
+   * COMPLEX BEHAVIOR:
+   * 1. Handles both direct values and updater functions (SetStateAction<T>)
+   * 2. Uses functional setState to avoid stale closure references
+   * 3. Immediately persists to localStorage within the setState callback
+   * 4. Type-safe handling of function vs value parameters
+   */
+  const setValueAndPersist = useCallback((valueOrFunction: SetStateAction<T>) => {
+    setValue(prevValue => {
+      // Type-safe resolution of SetStateAction<T> - handles both:
+      // - Direct values: setProjects(newArray)
+      // - Updater functions: setProjects(prev => [...prev, newItem])
+      const newValue = typeof valueOrFunction === 'function' 
+        ? (valueOrFunction as (prevState: T) => T)(prevValue)
+        : valueOrFunction;
+      
+      // IMMEDIATE PERSISTENCE: Critical for preventing data loss
+      // This ensures localStorage is updated synchronously with state,
+      // preventing race conditions in rapid successive updates
+      if (typeof window !== "undefined") {
+        localStorage.setItem(key, JSON.stringify(newValue));
+      }
+      
+      return newValue;
+    });
+  }, [key]);
+
+  // LEGACY PERSISTENCE: Keep useEffect for backward compatibility
+  // This is now redundant due to immediate persistence above, but maintained
+  // to ensure consistency in edge cases where the setter isn't used directly
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem(key, JSON.stringify(value));
     }
   }, [key, value]);
 
-  return [value, setValue];
+  return [value, setValueAndPersist];
 };

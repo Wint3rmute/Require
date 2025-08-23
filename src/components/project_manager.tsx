@@ -300,7 +300,7 @@ export default function ProjectManager() {
     const newProject = useTemplate 
       ? createCarTemplate(name, description)
       : createNewProject(name, description);
-    setProjects([...projects, newProject]);
+    setProjects(prevProjects => [...prevProjects, newProject]);
     setCurrentProjectId(newProject.id);
   };
 
