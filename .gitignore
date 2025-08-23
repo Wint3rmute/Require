@@ -13,6 +13,7 @@ prisma/dev.db
 
 # testing
 /coverage
+.jest
 
 # next.js
 /.next/

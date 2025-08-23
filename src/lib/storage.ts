@@ -74,7 +74,7 @@ export function useCurrentProjectId() {
 export function useProject(projectId: string | null) {
   const [projects, setProjects] = useProjects();
   
-  const project = projectId ? projects.find(p => p.id === projectId) : null;
+  const project = projectId ? projects.find(p => p.id === projectId) || null : null;
   
   const updateProject = (updatedProject: Project) => {
     setProjects(projects.map(p => p.id === updatedProject.id ? updatedProject : p));
