@@ -1,5 +1,7 @@
 # Require
 
+Demo deployment, data stored in browser's `localStorage`: https://require.fly.dev/
+
 Require is a system modeling and requirements tracing application. Core functionalities:
 
 - Definition and decomposition of systems into:
