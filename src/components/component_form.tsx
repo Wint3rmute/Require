@@ -40,14 +40,23 @@ interface ComponentFormProps {
   onSubmit: (componentData: Omit<Component, 'id'>) => void;
   onCancel?: () => void;
   defaultPosition?: { x: number; y: number };
+  availableParents?: Component[]; // For parent selection
+  selectedParentId?: string; // Pre-selected parent
 }
 
-export default function ComponentForm({ onSubmit, onCancel, defaultPosition }: ComponentFormProps) {
+export default function ComponentForm({ 
+  onSubmit, 
+  onCancel, 
+  defaultPosition, 
+  availableParents = [],
+  selectedParentId = ''
+}: ComponentFormProps) {
   const [interfaces] = useInterfaces();
   
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<ComponentType>('component');
+  const [parentId, setParentId] = useState(selectedParentId);
   const [componentInterfaces, setComponentInterfaces] = useState<ComponentInterfaceInput[]>([]);
 
   const addInterface = () => {
@@ -92,12 +101,18 @@ export default function ComponentForm({ onSubmit, onCancel, defaultPosition }: C
       componentData.description = description.trim();
     }
 
+    // Add parentId only if it's not empty
+    if (parentId) {
+      componentData.parentId = parentId;
+    }
+
     onSubmit(componentData);
     
     // Reset form
     setName('');
     setDescription('');
     setType('component');
+    setParentId('');
     setComponentInterfaces([]);
   };
 
@@ -142,6 +157,24 @@ export default function ComponentForm({ onSubmit, onCancel, defaultPosition }: C
             <MenuItem value="system">System</MenuItem>
           </Select>
         </FormControl>
+
+        {availableParents.length > 0 && (
+          <FormControl fullWidth>
+            <InputLabel>Parent Component (Optional)</InputLabel>
+            <Select
+              value={parentId}
+              label="Parent Component (Optional)"
+              onChange={(e) => setParentId(e.target.value)}
+            >
+              <MenuItem value="">None (Root Level)</MenuItem>
+              {availableParents.map((component) => (
+                <MenuItem key={component.id} value={component.id}>
+                  {component.name} ({component.type})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
         <Divider />
 
