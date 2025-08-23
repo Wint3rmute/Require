@@ -178,7 +178,8 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
   const [reactFlowNodes, setNodes, onNodesChange] = useNodesState(nodes);
   const [reactFlowEdges, setEdges, onEdgesChange] = useEdgesState(edges);
 
-  // Sync ReactFlow state with project data
+  // Only sync ReactFlow state when project actually changes (not during dragging)
+  // This prevents unnecessary re-renders during drag operations
   useEffect(() => {
     setNodes(nodes);
   }, [nodes, setNodes]);
@@ -193,9 +194,13 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
     
     onNodesChange(changes);
     
-    // Update component positions in project
+    // Update component positions in project - but only when dragging ends
+    // This prevents excessive localStorage writes during dragging
     const positionChanges = changes.filter((change): change is NodePositionChange => 
-      change.type === 'position' && 'position' in change && change.position !== undefined
+      change.type === 'position' && 
+      'position' in change && 
+      change.position !== undefined &&
+      change.dragging === false // Only update when dragging ends
     );
     
     if (positionChanges.length > 0) {
