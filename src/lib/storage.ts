@@ -275,7 +275,8 @@ export function removeConnection(project: Project, connectionId: string): Projec
       ...component,
       interfaces: component.interfaces.map(iface => {
         if (iface.connectionId === connectionId) {
-          const { connectionId: _, ...ifaceWithoutConnection } = iface;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { connectionId: _removedConnectionId, ...ifaceWithoutConnection } = iface;
           return {
             ...ifaceWithoutConnection,
             isConnected: false
@@ -342,31 +343,46 @@ export function getCompatibilityIssues(project: Project): Array<{
 /**
  * Validate and migrate project data if needed
  */
-export function validateAndMigrateProject(projectData: any): Project | null {
+export function validateAndMigrateProject(projectData: unknown): Project | null {
   try {
     // Basic validation
-    if (!projectData.id || !projectData.name || !Array.isArray(projectData.components)) {
+    if (!projectData || typeof projectData !== 'object' || projectData === null) {
+      console.warn('Invalid project data structure');
+      return null;
+    }
+    
+    const data = projectData as Record<string, unknown>;
+    
+    if (!data.id || !data.name || !Array.isArray(data.components)) {
       console.warn('Invalid project data structure');
       return null;
     }
     
     // Ensure all components have required fields
-    const validatedComponents = projectData.components.map((comp: any) => ({
-      id: comp.id || generateId(),
-      name: comp.name || 'Unnamed Component',
-      type: comp.type || 'component',
-      position: comp.position || { x: 0, y: 0 },
-      interfaces: comp.interfaces || [],
-      ...comp
-    }));
+    const validatedComponents = (data.components as unknown[]).map((comp: unknown) => {
+      const component = comp as Record<string, unknown>;
+      return {
+        id: component.id || generateId(),
+        name: component.name || 'Unnamed Component',
+        type: component.type || 'component',
+        position: component.position || { x: 0, y: 0 },
+        interfaces: component.interfaces || [],
+        ...component
+      } as Component;
+    });
     
-    return {
-      id: projectData.id,
-      name: projectData.name,
-      description: projectData.description,
+    const project: Project = {
+      id: data.id as string,
+      name: data.name as string,
       components: validatedComponents,
-      connections: projectData.connections || []
+      connections: (data.connections as Connection[]) || []
     };
+    
+    if (data.description && typeof data.description === 'string') {
+      project.description = data.description;
+    }
+    
+    return project;
   } catch (error) {
     console.error('Failed to validate project data:', error);
     return null;
@@ -403,3 +419,6 @@ export const RequireStorage = {
   validateAndMigrateProject,
   STORAGE_KEYS
 };
+
+// Re-export from data-models for convenience
+export { generateId, DEFAULT_COMPONENT_SIZE } from './data-models';

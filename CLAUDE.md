@@ -8,8 +8,7 @@ Require is a system modeling and requirements tracing application built with Nex
 
 ## Development Commands
 
-- **Build**: `npm run build --turbopack`
-- **Production start**: `npm start`
+- **Build**: `npm run build`
 - **Lint**: `npm run lint -- --fix`
 
 **IMPORTANT**: Always run `npm run lint` and `npm run build` to verify changes before considering work complete.

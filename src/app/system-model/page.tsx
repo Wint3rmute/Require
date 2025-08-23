@@ -10,8 +10,9 @@ import {
   Controls,
   Background,
   Node,
+  Edge,
+  ReactFlowInstance,
 } from '@xyflow/react';
-import 'allotment/dist/style.css';
 import '@xyflow/react/dist/style.css';
 import InterfacesList from '@/components/interfaces_list';
 import { useLocalStorage } from '@/lib/use_local_storage';
@@ -20,7 +21,7 @@ import React, { useState, DragEvent } from 'react';
 import CableIcon from '@mui/icons-material/Cable';
 
 const initialNodes: Node[] = [];
-const initialEdges = [];
+const initialEdges: Edge[] = [];
 
 const iconMap: { [key: string]: React.ReactElement } = {
   default: <CableIcon />,
@@ -30,7 +31,7 @@ export default function SystemModel() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
   const [interfaces] = useLocalStorage<Interface[]>('interfaces', []);
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
   const onDragOver = (event: DragEvent) => {
     event.preventDefault();
@@ -44,7 +45,7 @@ export default function SystemModel() {
     const label = event.dataTransfer.getData('application/label');
 
     // check if the dropped element is valid
-    if (typeof type === 'undefined' || !type) {
+    if (typeof type === 'undefined' || !type || !reactFlowInstance) {
       return;
     }
 

@@ -41,6 +41,18 @@ export default function InterfacesList({ interfaces, iconMap, onDelete, onDragSt
       iface.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleDragStart = (event: React.DragEvent, interfaceItem: Interface) => {
+    // Set data for SystemEditor to consume
+    event.dataTransfer.setData('application/reactflow', interfaceItem.id);
+    event.dataTransfer.setData('application/reactflow-name', interfaceItem.name);
+    event.dataTransfer.effectAllowed = 'move';
+    
+    // Also call the optional onDragStart prop for backward compatibility
+    if (onDragStart) {
+      onDragStart(event, interfaceItem.id, interfaceItem.name);
+    }
+  };
+
   return (
     <Box sx={{ width: '100%', maxWidth: 800, bgcolor: 'background.paper' }}>
       <Typography variant="h4" component="h1" sx={{ mb: 3, textAlign: 'center' }}>
@@ -59,14 +71,18 @@ export default function InterfacesList({ interfaces, iconMap, onDelete, onDragSt
           <ListItem
             key={interfaceItem.id}
             disablePadding
-            sx={{ mb: 1 }}
+            sx={{ 
+              mb: 1,
+              cursor: 'grab',
+              '&:active': { cursor: 'grabbing' }
+            }}
             secondaryAction={
               <IconButton edge="end" aria-label="delete" onClick={() => onDelete(interfaceItem.id)}>
                 <DeleteIcon />
               </IconButton>
             }
-            onDragStart={onDragStart ? (event) => onDragStart(event, 'default', interfaceItem.name) : undefined}
-            draggable={!!onDragStart}
+            draggable={true}
+            onDragStart={(event) => handleDragStart(event, interfaceItem)}
           >
             <ListItemButton sx={{ borderRadius: 1, border: '1px solid #e0e0e0' }}>
               <ListItemIcon>
