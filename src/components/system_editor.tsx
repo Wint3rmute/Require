@@ -14,7 +14,6 @@ import {
   Connection,
   useReactFlow,
   NodeChange,
-  NodePositionChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Handle, Position, NodeResizer } from '@xyflow/react';
@@ -27,7 +26,6 @@ import {
   DEFAULT_COMPONENT_SIZE
 } from '@/lib/storage';
 import { Component } from '@/lib/models';
-import { LegendToggleRounded } from '@mui/icons-material';
 
 // ========================================
 // Custom Node Components
@@ -234,22 +232,10 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
     
     onNodesChange(changes);
     
-    // Update component positions in project - but only when dragging ends
-    // This prevents excessive localStorage writes during dragging
-    const positionChanges = changes.filter((change): change is NodePositionChange => 
-      change.type === 'position' && 
-      'position' in change && 
-      change.position !== undefined &&
-      change.dragging === false // Only update when dragging ends
-    );
-
-    // if (positionChanges.length !== 0) {
-    //   console.log(positionChanges);
-    //   console.log(project)
-    // }
-
+    // Note: Position updates could be implemented here when dragging ends
+    // Currently just handling the visual changes in ReactFlow
     
-  }, [project, updateProject, onNodesChange]);
+  }, [project, onNodesChange]);
 
   // Handle new connections
   const onConnect = useCallback((connection: Connection) => {
