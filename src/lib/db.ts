@@ -1,6 +1,8 @@
 // DO NOT USE THIS MODULE FOR THE CURRENT MILESTONE
 // IT IS A PROOF OF CONCEPT FROM PROTOTYPING PHASE.
+// COMMENTED OUT TO ALLOW BUILD TO SUCCEED WITHOUT PRISMA
 
+/*
 "use server"
 
 import { PrismaClient, Project } from '@/generated/prisma'
@@ -36,4 +38,4 @@ export async function createInterfaceDefinition(data: InterfaceFormData) {
   // Update data
   // Revalidate cache
 }
-
+*/
