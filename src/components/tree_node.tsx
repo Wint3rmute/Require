@@ -68,7 +68,6 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'system': return 'primary';
-      case 'subsystem': return 'secondary';
       case 'component': return 'default';
       default: return 'default';
     }

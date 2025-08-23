@@ -45,9 +45,8 @@ jobs:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
+            PR: ${{ github.event.pull_request.title }}
+
+            https://github.com/${{ github.repository }}/pull/${{ github.event.number }}
+
             Demo deployment ready: https://require-pr-${{ github.event.number }}.fly.dev/
-
-            ${{ github.actor }} commited:
-            ${{ github.event.head_commit.message }}
-
-            PR link: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}
