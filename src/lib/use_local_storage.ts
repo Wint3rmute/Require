@@ -1,4 +1,4 @@
-import { useState, useEffect, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, Dispatch, SetStateAction, useCallback } from "react";
 
 function getStorageValue<T>(key: string, defaultValue: T): T {
   if (typeof window === "undefined") {
@@ -24,11 +24,26 @@ export const useLocalStorage = <T>(
     return getStorageValue(key, defaultValue);
   });
 
+  const setValueAndPersist = useCallback((valueOrFunction: SetStateAction<T>) => {
+    setValue(prevValue => {
+      const newValue = typeof valueOrFunction === 'function' 
+        ? (valueOrFunction as (prevState: T) => T)(prevValue)
+        : valueOrFunction;
+      
+      // Immediately persist to localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem(key, JSON.stringify(newValue));
+      }
+      
+      return newValue;
+    });
+  }, [key]);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem(key, JSON.stringify(value));
     }
   }, [key, value]);
 
-  return [value, setValue];
+  return [value, setValueAndPersist];
 };
