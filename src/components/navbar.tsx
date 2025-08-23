@@ -23,7 +23,7 @@ export default function ButtonAppBar() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const navigationLinks = [
-    { name: 'Subsystems', href: '/tree-editor' },
+    { name: 'Component Tree', href: '/tree-editor' },
     { name: 'Interfaces', href: '/interfaces' },
     { name: 'System Model', href: '/system-model' },
     { name: 'Login', href: '#' }
@@ -63,7 +63,7 @@ export default function ButtonAppBar() {
           {!isMobile && (
             <>
               <Button color="inherit" component={Link} href="/tree-editor">
-                Subsystems
+                Component Tree
               </Button>
               <Button color="inherit" component={Link} href="/interfaces">
                 Interfaces
