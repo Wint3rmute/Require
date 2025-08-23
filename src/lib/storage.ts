@@ -17,6 +17,7 @@ import {
   generateId,
   checkInterfaceCompatibility
 } from './models';
+import { createCarTemplate } from './car_template';
 
 // ========================================
 // Storage Keys
@@ -116,6 +117,8 @@ export function createNewProject(name: string, description?: string): Project {
   
   return project;
 }
+
+
 
 /**
  * Add a component to a project
@@ -390,6 +393,7 @@ export const RequireStorage = {
   
   // Project operations
   createNewProject,
+  createCarTemplate,
   addComponentToProject,
   updateComponentInProject,
   removeComponentFromProject,
@@ -409,3 +413,6 @@ export const RequireStorage = {
 
 // Re-export from models for convenience
 export { generateId, DEFAULT_COMPONENT_SIZE } from './models';
+
+// Re-export from car_template for convenience
+export { createCarTemplate } from './car_template';
