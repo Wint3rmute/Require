@@ -26,7 +26,7 @@ export default function ButtonAppBar() {
             </Link>
           </Typography>
 
-          <Button color="inherit" component={Link} href="/subsystems">
+          <Button color="inherit" component={Link} href="/tree-editor">
             Subsystems
           </Button>
           <Button color="inherit" component={Link} href="/interfaces">
