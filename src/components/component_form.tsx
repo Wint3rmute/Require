@@ -145,7 +145,6 @@ export default function ComponentForm({
               onChange={(e) => setType(e.target.value as ComponentType)}
             >
               <MenuItem value="component">Component</MenuItem>
-              <MenuItem value="subsystem">Subsystem</MenuItem>
               <MenuItem value="system">System</MenuItem>
             </Select>
           </FormControl>

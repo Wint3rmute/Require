@@ -47,7 +47,7 @@ export default function LandingPage({ onCreateProject }: LandingPageProps) {
     {
       icon: <SystemIcon />,
       title: 'System Decomposition',
-      description: 'Break down complex systems into subsystems and components with multiple nesting levels',
+      description: 'Break down complex systems into components with multiple nesting levels',
     },
     {
       icon: <InterfaceIcon />,

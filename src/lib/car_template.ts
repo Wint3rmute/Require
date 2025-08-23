@@ -28,7 +28,7 @@ export function createCarTemplate(name: string, description?: string): Project {
     id: generateId(),
     name: 'Engine Subsystem',
     description: 'Internal combustion engine with fuel injection and ignition systems',
-    type: 'subsystem',
+    type: 'component',
     parentId: rootSystem.id,
     position: { x: 150, y: 200 },
     interfaces: [
@@ -55,7 +55,7 @@ export function createCarTemplate(name: string, description?: string): Project {
     id: generateId(),
     name: 'Transmission',
     description: 'Automatic transmission system with electronic control',
-    type: 'subsystem', 
+    type: 'component', 
     parentId: rootSystem.id,
     position: { x: 400, y: 200 },
     interfaces: [
@@ -74,7 +74,7 @@ export function createCarTemplate(name: string, description?: string): Project {
     id: generateId(),
     name: 'Electrical System',
     description: 'Main electrical distribution, battery management, and charging system',
-    type: 'subsystem',
+    type: 'component',
     parentId: rootSystem.id,
     position: { x: 150, y: 350 },
     interfaces: [
@@ -101,7 +101,7 @@ export function createCarTemplate(name: string, description?: string): Project {
     id: generateId(),
     name: 'Braking System',
     description: 'Anti-lock braking system (ABS) with electronic brake distribution',
-    type: 'subsystem',
+    type: 'component',
     parentId: rootSystem.id,
     position: { x: 400, y: 350 },
     interfaces: [
@@ -120,7 +120,7 @@ export function createCarTemplate(name: string, description?: string): Project {
     id: generateId(),
     name: 'Steering System',
     description: 'Electronic power steering with lane keeping assistance',
-    type: 'subsystem',
+    type: 'component',
     parentId: rootSystem.id,
     position: { x: 650, y: 200 },
     interfaces: [

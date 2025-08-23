@@ -16,7 +16,7 @@ export interface Component {
   id: string;
   name: string;
   description?: string;
-  type: 'system' | 'subsystem' | 'component';
+  type: 'system' | 'component'; // 'system' = root only, 'component' = everything else
   parentId?: string; // For hierarchical nesting
   position: { x: number; y: number }; // Required for ReactFlow
   interfaces: ComponentInterface[]; // Interfaces this component has
@@ -68,7 +68,7 @@ export interface Interface {
 // Utility Types
 // ========================================
 
-export type ComponentType = 'system' | 'subsystem' | 'component';
+export type ComponentType = 'system' | 'component'; // Simplified: system=root, component=everything else
 export type InterfacePosition = 'left' | 'right' | 'top' | 'bottom';
 export type CompatibilityStatus = 'compatible' | 'incompatible' | 'unknown';
 

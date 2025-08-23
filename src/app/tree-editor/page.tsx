@@ -113,7 +113,7 @@ const TreeEditorPage = () => {
       <Container>
         <Box sx={{ my: 4 }}>
           <Alert severity="info">
-            Please select or create a project from the System Model page to use the Tree Editor.
+            Please select or create a project from the System Model page to manage the component hierarchy.
           </Alert>
         </Box>
       </Container>
@@ -136,10 +136,10 @@ const TreeEditorPage = () => {
     <Container>
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Component Tree Editor
+          Component Hierarchy
         </Typography>
         <Typography variant="body1" color="text.secondary" gutterBottom>
-          Project: {project.name}
+          Project: {project.name} • Manage component tree structure and relationships
         </Typography>
         
         <Paper sx={{ p: 2, mb: 2 }}>
