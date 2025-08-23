@@ -6,7 +6,7 @@
  * and interfaces for demonstration and testing purposes.
  */
 
-import { Project, Component, generateId } from './models';
+import { Project, Component, generateId, createDefaultSystemView } from './models';
 
 /**
  * Create a car template project with automotive components
@@ -197,11 +197,16 @@ export function createCarTemplate(name: string, description?: string): Project {
     });
   });
 
+  // Create the default system view
+  const defaultSystemView = createDefaultSystemView(projectId, components);
+  
   const project: Project = {
     id: projectId,
     name,
     components,
-    connections: []
+    connections: [],
+    systemViews: [defaultSystemView],
+    currentSystemViewId: defaultSystemView.id
   };
   
   if (description) {

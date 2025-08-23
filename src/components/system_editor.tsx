@@ -24,9 +24,12 @@ import {
   addComponentToProject,
   createConnection,
   generateId,
-  DEFAULT_COMPONENT_SIZE
+  DEFAULT_COMPONENT_SIZE,
+  getCurrentSystemView,
+  updateComponentPositionInSystemView,
+  ensureProjectHasSystemViews
 } from '@/lib/storage';
-import { Component } from '@/lib/models';
+import { Component, getComponentPosition, isComponentVisible } from '@/lib/models';
 
 // ========================================
 // Custom Node Components
@@ -137,24 +140,36 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
   const { project, updateProject } = useProject(projectId);
   const { screenToFlowPosition } = useReactFlow();
 
-  // Convert project components to ReactFlow nodes
-  const nodes = useMemo(() => {
-    if (!project) return [];
-    
-    return project.components.map((component): Node => ({
-      id: component.id,
-      type: 'component',
-      position: component.position,
-      data: { component },
-      draggable: true,
-    }));
+  // Ensure project has system views (migration helper)
+  const migratedProject = useMemo(() => {
+    return project ? ensureProjectHasSystemViews(project) : null;
   }, [project]);
+
+  // Get current system view
+  const currentSystemView = useMemo(() => {
+    return migratedProject ? getCurrentSystemView(migratedProject) : null;
+  }, [migratedProject]);
+
+  // Convert project components to ReactFlow nodes using SystemView positions
+  const nodes = useMemo(() => {
+    if (!migratedProject || !currentSystemView) return [];
+    
+    return migratedProject.components
+      .filter(component => isComponentVisible(component.id, currentSystemView))
+      .map((component): Node => ({
+        id: component.id,
+        type: 'component',
+        position: getComponentPosition(component, currentSystemView),
+        data: { component },
+        draggable: true,
+      }));
+  }, [migratedProject, currentSystemView]);
 
   // Convert project connections to ReactFlow edges
   const edges = useMemo(() => {
-    if (!project) return [];
+    if (!migratedProject) return [];
     
-    return project.connections.map((connection): Edge => ({
+    return migratedProject.connections.map((connection): Edge => ({
       id: connection.id,
       source: connection.sourceComponentId,
       target: connection.targetComponentId,
@@ -173,7 +188,7 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
         fontSize: '12px'
       }
     }));
-  }, [project]);
+  }, [migratedProject]);
 
   const [reactFlowNodes, setNodes, onNodesChange] = useNodesState(nodes);
   const [reactFlowEdges, setEdges, onEdgesChange] = useEdgesState(edges);
@@ -190,11 +205,11 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
 
     // Handle component position changes
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
-    if (!project) return;
+    if (!migratedProject || !currentSystemView) return;
     
     onNodesChange(changes);
     
-    // Update component positions in project - but only when dragging ends
+    // Update component positions in SystemView - but only when dragging ends
     // This prevents excessive localStorage writes during dragging
     const positionChanges = changes.filter((change): change is NodePositionChange => 
       change.type === 'position' && 
@@ -204,32 +219,32 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
     );
     
     if (positionChanges.length > 0) {
-      const updatedProject = { ...project };
+      let updatedProject = migratedProject;
       
       positionChanges.forEach(change => {
-        const component = updatedProject.components.find(c => c.id === change.id);
-        if (component && change.position) {
-          const componentIndex = updatedProject.components.findIndex(c => c.id === change.id);
-          updatedProject.components[componentIndex] = {
-            ...component,
-            position: change.position
-          };
+        if (change.position) {
+          updatedProject = updateComponentPositionInSystemView(
+            updatedProject,
+            currentSystemView.id,
+            change.id,
+            change.position
+          );
         }
       });
       
       updateProject(updatedProject);
     }
-  }, [project, updateProject, onNodesChange]);
+  }, [migratedProject, currentSystemView, updateProject, onNodesChange]);
 
   // Handle new connections
   const onConnect = useCallback((connection: Connection) => {
-    if (!project || !connection.source || !connection.target || !connection.sourceHandle || !connection.targetHandle) {
+    if (!migratedProject || !connection.source || !connection.target || !connection.sourceHandle || !connection.targetHandle) {
       return;
     }
 
     try {
       const updatedProject = createConnection(
-        project,
+        migratedProject,
         connection.source,
         connection.sourceHandle,
         connection.target,
@@ -240,7 +255,7 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
       console.error('Failed to create connection:', error);
       // TODO: Show user-friendly error message
     }
-  }, [project, updateProject]);
+  }, [migratedProject, updateProject]);
 
   // Handle drag and drop from interface list
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -251,7 +266,7 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
   const onDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
 
-    if (!project) return;
+    if (!migratedProject || !currentSystemView) return;
 
     const interfaceType = event.dataTransfer.getData('application/reactflow');
     const interfaceName = event.dataTransfer.getData('application/reactflow-name');
@@ -264,11 +279,10 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
     });
 
     // Create new component with the dropped interface
-    const updatedProject = addComponentToProject(project, {
+    let updatedProject = addComponentToProject(migratedProject, {
       name: `New ${interfaceName} Component`,
       description: `Component with ${interfaceName} interface`,
       type: 'component',
-      position,
       interfaces: [{
         id: generateId(),
         componentId: '', // Will be set by addComponentToProject
@@ -279,10 +293,24 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
       }]
     });
 
-    updateProject(updatedProject);
-  }, [project, updateProject, screenToFlowPosition]);
+    // Update the position in the current system view
+    const newComponent = updatedProject.components.find(c => 
+      !migratedProject.components.some(existingC => existingC.id === c.id)
+    );
+    
+    if (newComponent) {
+      updatedProject = updateComponentPositionInSystemView(
+        updatedProject,
+        currentSystemView.id,
+        newComponent.id,
+        position
+      );
+    }
 
-  if (!project) {
+    updateProject(updatedProject);
+  }, [migratedProject, currentSystemView, updateProject, screenToFlowPosition]);
+
+  if (!migratedProject) {
     return (
       <div style={{ 
         height: '100%', 

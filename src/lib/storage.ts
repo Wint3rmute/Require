@@ -8,14 +8,17 @@
  * - Integration with existing useLocalStorage hook
  */
 
+import { useMemo, useCallback } from 'react';
 import { useLocalStorage } from './use_local_storage';
 import { 
   Project, 
   Component, 
   Connection, 
   Interface,
+  SystemView,
   generateId,
-  checkInterfaceCompatibility
+  checkInterfaceCompatibility,
+  createDefaultSystemView
 } from './models';
 import { createCarTemplate } from './car_template';
 
@@ -56,10 +59,27 @@ export function useInterfaces() {
 }
 
 /**
- * Hook for managing all projects
+ * Hook for managing all projects with migration support
  */
 export function useProjects() {
-  return useLocalStorage<Project[]>(STORAGE_KEYS.PROJECTS, DEFAULT_PROJECTS);
+  const [rawProjects, setRawProjects] = useLocalStorage<Project[]>(STORAGE_KEYS.PROJECTS, DEFAULT_PROJECTS);
+  
+  // Migrate projects to ensure they have SystemViews
+  const projects = useMemo(() => {
+    return rawProjects.map(project => {
+      const migrated = validateAndMigrateProject(project);
+      return migrated || project; // fallback to original if migration fails
+    });
+  }, [rawProjects]);
+  
+  const setProjects = useCallback((projectsOrUpdater: Project[] | ((prev: Project[]) => Project[])) => {
+    const newProjects = typeof projectsOrUpdater === 'function' 
+      ? projectsOrUpdater(projects)
+      : projectsOrUpdater;
+    setRawProjects(newProjects);
+  }, [projects, setRawProjects]);
+  
+  return [projects, setProjects] as const;
 }
 
 /**
@@ -89,7 +109,7 @@ export function useProject(projectId: string | null) {
 // ========================================
 
 /**
- * Create a new project with a default root system component
+ * Create a new project with a default root system component and default system view
  */
 export function createNewProject(name: string, description?: string): Project {
   const projectId = generateId();
@@ -100,15 +120,20 @@ export function createNewProject(name: string, description?: string): Project {
     name: `${name} System`,
     description: `Root system for ${name}`,
     type: 'system',
-    position: { x: 100, y: 100 },
+    position: { x: 100, y: 100 }, // Keep for backwards compatibility during migration
     interfaces: []
   };
+  
+  const components = [rootSystem];
+  const defaultSystemView = createDefaultSystemView(projectId, components);
   
   const project: Project = {
     id: projectId,
     name,
-    components: [rootSystem],
-    connections: []
+    components,
+    connections: [],
+    systemViews: [defaultSystemView],
+    currentSystemViewId: defaultSystemView.id
   };
   
   if (description) {
@@ -366,18 +391,181 @@ export function validateAndMigrateProject(projectData: unknown): Project | null 
       id: data.id as string,
       name: data.name as string,
       components: validatedComponents,
-      connections: (data.connections as Connection[]) || []
+      connections: (data.connections as Connection[]) || [],
+      systemViews: ((data.systemViews as unknown[]) || []).map(view => {
+        const viewData = view as Record<string, unknown>;
+        return {
+          ...viewData,
+          createdAt: viewData.createdAt ? new Date(viewData.createdAt as string) : new Date(),
+          updatedAt: viewData.updatedAt ? new Date(viewData.updatedAt as string) : new Date()
+        } as SystemView;
+      })
     };
+    
+    // Set currentSystemViewId only if it exists
+    if (data.currentSystemViewId && typeof data.currentSystemViewId === 'string') {
+      project.currentSystemViewId = data.currentSystemViewId;
+    }
     
     if (data.description && typeof data.description === 'string') {
       project.description = data.description;
     }
     
-    return project;
+    // Ensure project has at least one SystemView (migration)
+    const migratedProject = ensureProjectHasSystemViews(project);
+    
+    return migratedProject;
   } catch (error) {
     console.error('Failed to validate project data:', error);
     return null;
   }
+}
+
+// ========================================
+// SystemView Management Functions
+// ========================================
+
+/**
+ * Add a new SystemView to a project
+ */
+function addSystemViewToProject(
+  project: Project, 
+  systemView: Omit<SystemView, 'id' | 'createdAt' | 'updatedAt'>
+): Project {
+  const now = new Date();
+  const newSystemView: SystemView = {
+    ...systemView,
+    id: generateId(),
+    createdAt: now,
+    updatedAt: now
+  };
+  
+  return {
+    ...project,
+    systemViews: [...(project.systemViews || []), newSystemView]
+  };
+}
+
+/**
+ * Update a SystemView in a project
+ */
+function updateSystemViewInProject(
+  project: Project,
+  systemViewId: string,
+  updates: Partial<Omit<SystemView, 'id' | 'createdAt'>>
+): Project {
+  const systemViews = project.systemViews || [];
+  const updatedSystemViews = systemViews.map(view => 
+    view.id === systemViewId 
+      ? { ...view, ...updates, updatedAt: new Date() }
+      : view
+  );
+  
+  return {
+    ...project,
+    systemViews: updatedSystemViews
+  };
+}
+
+/**
+ * Remove a SystemView from a project
+ */
+function removeSystemViewFromProject(
+  project: Project,
+  systemViewId: string
+): Project {
+  const systemViews = project.systemViews || [];
+  const filteredSystemViews = systemViews.filter(view => view.id !== systemViewId);
+  
+  // If we're removing the current view, switch to the first available view
+  let currentSystemViewId = project.currentSystemViewId;
+  if (currentSystemViewId === systemViewId && filteredSystemViews.length > 0) {
+    const firstView = filteredSystemViews[0];
+    currentSystemViewId = firstView ? firstView.id : undefined;
+  } else if (filteredSystemViews.length === 0) {
+    currentSystemViewId = undefined;
+  }
+  
+  const updatedProject: Project = {
+    ...project,
+    systemViews: filteredSystemViews
+  };
+  
+  if (currentSystemViewId) {
+    updatedProject.currentSystemViewId = currentSystemViewId;
+  }
+  
+  return updatedProject;
+}
+
+/**
+ * Set the active SystemView for a project
+ */
+function setCurrentSystemView(
+  project: Project,
+  systemViewId: string
+): Project {
+  return {
+    ...project,
+    currentSystemViewId: systemViewId
+  };
+}
+
+/**
+ * Update component position in a SystemView
+ */
+function updateComponentPositionInSystemView(
+  project: Project,
+  systemViewId: string,
+  componentId: string,
+  position: { x: number; y: number }
+): Project {
+  return updateSystemViewInProject(project, systemViewId, {
+    componentPositions: {
+      ...((project.systemViews || []).find(v => v.id === systemViewId)?.componentPositions || {}),
+      [componentId]: position
+    }
+  });
+}
+
+/**
+ * Get current SystemView for a project
+ */
+function getCurrentSystemView(project: Project): SystemView | null {
+  if (!project.systemViews || project.systemViews.length === 0) {
+    return null;
+  }
+  
+  // Return current view if set
+  if (project.currentSystemViewId) {
+    const currentView = project.systemViews.find(v => v.id === project.currentSystemViewId);
+    if (currentView) {
+      return currentView;
+    }
+  }
+  
+  // Fallback to first view
+  const firstView = project.systemViews[0];
+  return firstView || null;
+}
+
+/**
+ * Ensure project has SystemViews (migration helper)
+ */
+function ensureProjectHasSystemViews(project: Project): Project {
+  // If project already has systemViews, return as-is
+  if (project.systemViews && project.systemViews.length > 0) {
+    return project;
+  }
+  
+  // Create default system view from existing component positions
+  const defaultSystemView = createDefaultSystemView(project.id, project.components);
+  
+  return {
+    ...project,
+    systemViews: [defaultSystemView],
+    currentSystemViewId: defaultSystemView.id
+  };
 }
 
 // ========================================
@@ -401,6 +589,15 @@ export const RequireStorage = {
   createConnection,
   removeConnection,
   
+  // SystemView operations
+  addSystemViewToProject,
+  updateSystemViewInProject,
+  removeSystemViewFromProject,
+  setCurrentSystemView,
+  updateComponentPositionInSystemView,
+  getCurrentSystemView,
+  ensureProjectHasSystemViews,
+  
   // Analysis
   calculateProjectCompleteness,
   findOrphanedComponents,
@@ -412,7 +609,18 @@ export const RequireStorage = {
 };
 
 // Re-export from models for convenience
-export { generateId, DEFAULT_COMPONENT_SIZE } from './models';
+export { generateId, DEFAULT_COMPONENT_SIZE, createDefaultSystemView, createEmptySystemView, getComponentPosition, isComponentVisible } from './models';
 
 // Re-export from car_template for convenience
 export { createCarTemplate } from './car_template';
+
+// Export SystemView functions individually for direct import
+export {
+  addSystemViewToProject,
+  updateSystemViewInProject,
+  removeSystemViewFromProject,
+  setCurrentSystemView,
+  updateComponentPositionInSystemView,
+  getCurrentSystemView,
+  ensureProjectHasSystemViews
+};
