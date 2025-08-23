@@ -33,7 +33,7 @@ export default function ButtonAppBar() {
             Interfaces
           </Button>
           <Button color="inherit" component={Link} href="/system-model">
-            Playground
+            System Model
           </Button>
           <Button color="inherit">Login</Button>
         </Toolbar>
