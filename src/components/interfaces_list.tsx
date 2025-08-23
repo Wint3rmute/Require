@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -6,6 +7,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
 import CableIcon from '@mui/icons-material/Cable';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -27,16 +29,33 @@ interface InterfacesListProps {
   // A map to resolve icon string identifiers to actual components.
   iconMap: { [key: string]: React.ReactElement };
   onDelete: (id: string) => void;
+  onDragStart?: (event: React.DragEvent, nodeType: string, label: string) => void;
 }
 
-export default function InterfacesList({ interfaces, iconMap, onDelete }: InterfacesListProps) {
+export default function InterfacesList({ interfaces, iconMap, onDelete, onDragStart }: InterfacesListProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredInterfaces = interfaces.filter(
+    (iface) =>
+      iface.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      iface.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Box sx={{ width: '100%', maxWidth: 800, bgcolor: 'background.paper' }}>
       <Typography variant="h4" component="h1" sx={{ mb: 3, textAlign: 'center' }}>
         Interfaces
       </Typography>
+      <TextField
+        label="Search Interfaces"
+        variant="outlined"
+        fullWidth
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        sx={{ mb: 2 }}
+      />
       <List>
-        {interfaces.map((interfaceItem) => (
+        {filteredInterfaces.map((interfaceItem) => (
           <ListItem
             key={interfaceItem.id}
             disablePadding
@@ -46,6 +65,8 @@ export default function InterfacesList({ interfaces, iconMap, onDelete }: Interf
                 <DeleteIcon />
               </IconButton>
             }
+            onDragStart={onDragStart ? (event) => onDragStart(event, 'default', interfaceItem.name) : undefined}
+            draggable={!!onDragStart}
           >
             <ListItemButton sx={{ borderRadius: 1, border: '1px solid #e0e0e0' }}>
               <ListItemIcon>

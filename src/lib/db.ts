@@ -1,3 +1,6 @@
+// DO NOT USE THIS MODULE FOR THE CURRENT MILESTONE
+// IT IS A PROOF OF CONCEPT FROM PROTOTYPING PHASE.
+
 "use server"
 
 import { PrismaClient, Project } from '@/generated/prisma'
@@ -27,8 +30,6 @@ export async function getNumInterfaces(slug: string): Promise<number> {
 }
 
 export async function createInterfaceDefinition(data: InterfaceFormData) {
-  
-
   console.log("Creating iface definition");
   console.log(data);
 

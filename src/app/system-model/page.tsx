@@ -1,177 +1,104 @@
-"use client"
-import React from 'react';
+'use client';
+
 import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-
-import '@xyflow/react/dist/style.css';
-import { useState, useCallback } from 'react';
+import Typography from '@mui/material/Typography';
 import {
-  ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, Edge, Node, NodeChange, EdgeChange, Connection,
-
+  ReactFlow,
+  useNodesState,
+  useEdgesState,
+  MiniMap,
+  Controls,
   Background,
-  BackgroundVariant,
-
+  Node,
 } from '@xyflow/react';
+import 'allotment/dist/style.css';
 import '@xyflow/react/dist/style.css';
-import { Handle, Position, NodeResizer } from '@xyflow/react';
+import InterfacesList from '@/components/interfaces_list';
+import { useLocalStorage } from '@/lib/use_local_storage';
+import { type Interface } from '@/components/interfaces_list';
+import React, { useState, DragEvent } from 'react';
+import CableIcon from '@mui/icons-material/Cable';
 
-const initialEdges: Edge[] = [];
+const initialNodes: Node[] = [];
+const initialEdges = [];
 
-interface Interface {
-  name: string
-}
-
-interface ChildSubsystem {
-  subsystem: Subsystem,
-  position: {
-    x: number,
-    y: number
-  }
-}
-
-interface Subsystem {
-  name: string,
-  children: ChildSubsystem[]
-  interfaces: Interface[]
-}
-
-
-const view: ChildSubsystem[] = [{
-  position: { x: 10, y: 10 },
-  subsystem: {
-    name: "satellite",
-    interfaces: [],
-    children: [{
-      position: { x: 0.0, y: 0.0 },
-      subsystem: {
-        name: "obc",
-        children: [],
-        interfaces: [{
-          name: "spacewire"
-        }
-        ]
-      }
-    }]
-  }
-}, {
-  position: { x: 10, y: 10 },
-  subsystem: {
-    name: "egse",
-    interfaces: [],
-    children: [
-      {
-        position: { x: 20.0, y: 30.0 },
-        subsystem: {
-          name: "star-dundee",
-          interfaces: [{ name: "spacewire" }],
-          children: []
-        }
-      }
-    ]
-  }
-}
-
-]
-
-const SubsystemNode = ({ data }: { data: { label: string } }) => {
-  return (
-    <div style={{ backgroundColor: "purple" }}>
-      <NodeResizer minWidth={100} minHeight={30} isVisible={true} />
-      <Handle type="target" position={Position.Left} />
-      <div style={{ padding: 10, backgroundColor: "orange" }}>{data.label}</div>
-      <Handle type="source" position={Position.Right} />
-    </div >
-  );
+const iconMap: { [key: string]: React.ReactElement } = {
+  default: <CableIcon />,
 };
 
-function build_nodes_from_system_view(view: ChildSubsystem[], parent_id: string | null = null): Node[] {
-  const nodes: Node[] = [];
-
-  for (const parent of view) {
-    if (parent_id !== null) {
-      nodes.push({
-        id: parent.subsystem.name,
-        type: "subsystem",
-        parentId: parent_id,
-        extent: 'parent',
-        position: parent.position,
-        data: {
-          label: parent.subsystem.name
-        }
-      })
-    } else {
-      nodes.push({
-        id: parent.subsystem.name,
-        position: { x: 0, y: 0 },
-        type: "subsystem",
-        data: {
-          label: parent.subsystem.name
-        }
-      })
-    }
-
-    for (const iface of parent.subsystem.interfaces) {
-      nodes.push({
-        id: `${parent.subsystem.name}/${iface.name}`,
-        type: "subsystem",
-        parentId: parent.subsystem.name,
-        position: { x: 40, y: 40 },
-        data: {
-          label: iface.name
-        },
-        extent: 'parent',
-      })
-    }
-
-    nodes.push(
-      ...build_nodes_from_system_view(parent.subsystem.children, parent.subsystem.name)
-    )
-
-  }
-
-  return nodes;
-}
-const initialNodes: Node[] = build_nodes_from_system_view(view);
-
-const nodeTypes = {
-  subsystem: SubsystemNode
-}
-
 export default function SystemModel() {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+  const [interfaces] = useLocalStorage<Interface[]>('interfaces', []);
+  const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-    [],
-  );
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
-    [],
-  );
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-    [],
-  );
+  const onDragOver = (event: DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const onDrop = (event: DragEvent) => {
+    event.preventDefault();
+
+    const type = event.dataTransfer.getData('application/reactflow');
+    const label = event.dataTransfer.getData('application/label');
+
+    // check if the dropped element is valid
+    if (typeof type === 'undefined' || !type) {
+      return;
+    }
+
+    const position = reactFlowInstance.screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+    const newNode = {
+      id: `${label}-${nodes.length + 1}`,
+      type,
+      position,
+      data: { label },
+    };
+
+    setNodes((nds) => nds.concat(newNode));
+  };
+
+  const onDragStart = (event: DragEvent, nodeType: string, label: string) => {
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.setData('application/label', label);
+    event.dataTransfer.effectAllowed = 'move';
+  };
 
   return (
-    <Box sx={{ flexGrow: 1, padding: 2 }}>
-      <Grid container spacing={2}>
-
-        <div style={{ width: '80vw', height: '80vh' }}>
+    <Box sx={{ display: 'flex', height: '100vh' }}>
+      <Box
+        sx={{
+          width: '250px',
+          borderRight: '1px solid #ddd',
+          padding: '16px',
+        }}
+      >
+        <Typography variant="h6">Interfaces</Typography>
+        <InterfacesList interfaces={interfaces} iconMap={iconMap} onDelete={() => {}} onDragStart={onDragStart} />
+      </Box>
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ padding: '16px', borderBottom: '1px solid #ddd' }}>
+          <Typography variant="h5">System Name</Typography>
+        </Box>
+        <Box sx={{ flexGrow: 1 }} onDrop={onDrop} onDragOver={onDragOver}>
           <ReactFlow
             nodes={nodes}
-            edges={edges}
             onNodesChange={onNodesChange}
+            edges={edges}
             onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
+            onInit={setReactFlowInstance}
             fitView
           >
-            <Background variant={BackgroundVariant.Dots} />
+            <MiniMap />
+            <Controls />
+            <Background />
           </ReactFlow>
-        </div>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 }
