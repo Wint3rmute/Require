@@ -16,11 +16,23 @@ import ListItemText from '@mui/material/ListItemText';
 import MenuIcon from '@mui/icons-material/Menu';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
+import { useCurrentProjectId, useProject } from '@/lib/storage';
 
 export default function ButtonAppBar() {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Get current project information
+  const [currentProjectId] = useCurrentProjectId();
+  const { project } = useProject(currentProjectId);
+  
+  // State to track if component has mounted (client-side)
+  const [isMounted, setIsMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const navigationLinks = [
     { name: 'Component Tree', href: '/tree-editor' },
@@ -35,6 +47,15 @@ export default function ButtonAppBar() {
 
   const handleDrawerClose = () => {
     setDrawerOpen(false);
+  };
+
+  // Generate the title text with project name if available
+  const getTitle = () => {
+    // Only show project name after component has mounted on client-side
+    if (isMounted && project) {
+      return `Require - ${project.name}`;
+    }
+    return 'Require';
   };
 
   return (
@@ -56,7 +77,7 @@ export default function ButtonAppBar() {
           
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-              Require
+              {getTitle()}
             </Link>
           </Typography>
 
