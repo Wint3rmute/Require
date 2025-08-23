@@ -59,40 +59,24 @@ describe('createCarTemplate', () => {
       expect(rootSystem?.interfaces).toEqual([]);
     });
 
-    it('should create subsystem components with proper hierarchy', () => {
+    it('should create child components with proper hierarchy', () => {
       const rootSystem = project.components.find(c => c.type === 'system');
-      const subsystems = project.components.filter(c => c.type === 'subsystem');
+      const childComponents = project.components.filter(c => c.type === 'component');
       
-      expect(subsystems).toHaveLength(5);
+      expect(childComponents).toHaveLength(7);
       
-      const expectedSubsystems = [
+      const expectedComponents = [
         'Engine Subsystem',
         'Transmission',
         'Electrical System',
         'Braking System',
-        'Steering System'
-      ];
-
-      expectedSubsystems.forEach(name => {
-        const subsystem = subsystems.find(s => s.name === name);
-        expect(subsystem).toBeDefined();
-        expect(subsystem?.parentId).toBe(rootSystem?.id);
-      });
-    });
-
-    it('should create component-level modules with proper hierarchy', () => {
-      const rootSystem = project.components.find(c => c.type === 'system');
-      const components = project.components.filter(c => c.type === 'component');
-      
-      expect(components).toHaveLength(2);
-      
-      const expectedComponents = [
+        'Steering System',
         'Infotainment System',
         'Body Control Module'
       ];
 
       expectedComponents.forEach(name => {
-        const component = components.find(c => c.name === name);
+        const component = childComponents.find(s => s.name === name);
         expect(component).toBeDefined();
         expect(component?.parentId).toBe(rootSystem?.id);
       });
