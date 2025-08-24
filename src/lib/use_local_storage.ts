@@ -1,4 +1,4 @@
-import { useState, useEffect, Dispatch, SetStateAction, useCallback } from "react";
+import { useState, Dispatch, SetStateAction, useCallback, useRef, useEffect } from "react";
 
 function getStorageValue<T>(key: string, defaultValue: T): T {
   if (typeof window === "undefined") {
@@ -20,52 +20,97 @@ export const useLocalStorage = <T>(
   key: string,
   defaultValue: T
 ): [T, Dispatch<SetStateAction<T>>] => {
+  // Smart debouncing: automatically debounce rapid updates
+  const DEBOUNCE_MS = 150; // Internal implementation detail
+  
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingValueRef = useRef<T | null>(null);
+  const lastUpdateRef = useRef<number>(0);
+  
   const [value, setValue] = useState<T>(() => {
     return getStorageValue(key, defaultValue);
   });
 
+  // Force persist any pending value
+  const forcePersist = useCallback(() => {
+    if (pendingValueRef.current !== null && typeof window !== "undefined") {
+      localStorage.setItem(key, JSON.stringify(pendingValueRef.current));
+      pendingValueRef.current = null;
+    }
+  }, [key]);
+
+  // Clear timeout and force persist on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      forcePersist();
+    };
+  }, [forcePersist]);
+
+  // Force persist on page unload
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const handleBeforeUnload = () => {
+      forcePersist();
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [forcePersist]);
+
   /**
-   * Enhanced setter that immediately persists data to localStorage.
+   * Smart setter with automatic debouncing detection.
    * 
-   * CRITICAL FIX: This addresses a race condition where rapid state updates
-   * (like double function calls in React dev mode) would cause data loss.
-   * The original version only persisted in useEffect after render, which
-   * created timing issues with fast successive updates.
-   * 
-   * COMPLEX BEHAVIOR:
-   * 1. Handles both direct values and updater functions (SetStateAction<T>)
-   * 2. Uses functional setState to avoid stale closure references
-   * 3. Immediately persists to localStorage within the setState callback
-   * 4. Type-safe handling of function vs value parameters
+   * INTELLIGENT DEBOUNCING:
+   * - Detects rapid successive updates (within 150ms)
+   * - First update: immediate persistence for responsiveness
+   * - Rapid follow-ups: debounced to reduce localStorage writes
+   * - Always persists on component unmount and page unload
+   * - No API changes - completely internal optimization
    */
   const setValueAndPersist = useCallback((valueOrFunction: SetStateAction<T>) => {
     setValue(prevValue => {
-      // Type-safe resolution of SetStateAction<T> - handles both:
-      // - Direct values: setProjects(newArray)
-      // - Updater functions: setProjects(prev => [...prev, newItem])
       const newValue = typeof valueOrFunction === 'function' 
         ? (valueOrFunction as (prevState: T) => T)(prevValue)
         : valueOrFunction;
       
-      // IMMEDIATE PERSISTENCE: Critical for preventing data loss
-      // This ensures localStorage is updated synchronously with state,
-      // preventing race conditions in rapid successive updates
-      if (typeof window !== "undefined") {
-        localStorage.setItem(key, JSON.stringify(newValue));
+      const now = Date.now();
+      const timeSinceLastUpdate = now - lastUpdateRef.current;
+      
+      // Smart debouncing logic
+      if (timeSinceLastUpdate > DEBOUNCE_MS || lastUpdateRef.current === 0) {
+        // First update or sufficient gap - persist immediately
+        if (typeof window !== "undefined") {
+          localStorage.setItem(key, JSON.stringify(newValue));
+        }
+        // Clear any pending debounced persist since we just persisted
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          pendingValueRef.current = null;
+        }
+      } else {
+        // Rapid update - debounce it
+        pendingValueRef.current = newValue;
+        
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+        
+        timeoutRef.current = setTimeout(() => {
+          if (typeof window !== "undefined" && pendingValueRef.current !== null) {
+            localStorage.setItem(key, JSON.stringify(pendingValueRef.current));
+            pendingValueRef.current = null;
+          }
+        }, DEBOUNCE_MS);
       }
       
+      lastUpdateRef.current = now;
       return newValue;
     });
   }, [key]);
-
-  // LEGACY PERSISTENCE: Keep useEffect for backward compatibility
-  // This is now redundant due to immediate persistence above, but maintained
-  // to ensure consistency in edge cases where the setter isn't used directly
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
-  }, [key, value]);
 
   return [value, setValueAndPersist];
 };

@@ -120,6 +120,31 @@ const ComponentNode = ({ data }: { data: ComponentNodeData }) => {
   );
 };
 
+
+// Add this above SystemEditor
+function NoProjectSelected() {
+  return (
+    <div style={{ 
+      height: '70vh', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      background: '#f9fafb',
+      border: '2px dashed #d1d5db',
+      borderRadius: '8px'
+    }}>
+      <div style={{ textAlign: 'center', color: '#6b7280' }}>
+        <div style={{ fontSize: '18px', marginBottom: '8px' }}>
+          No Project Selected
+        </div>
+        <div style={{ fontSize: '14px' }}>
+          Create or select a project to start system modeling
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Helper functions for interface positioning
 function getHandlePosition(position: 'left' | 'right' | 'top' | 'bottom'): Position {
   switch (position) {
@@ -178,19 +203,33 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
     return migratedProject ? getCurrentSystemView(migratedProject) : null;
   }, [migratedProject]);
 
-  // Convert project components to ReactFlow nodes using SystemView positions
+  // Convert project components to ReactFlow nodes using SystemView positions and parent-child relationships
   const nodes = useMemo(() => {
     if (!migratedProject || !currentSystemView) return [];
     
     return migratedProject.components
       .filter(component => isComponentVisible(component.id, currentSystemView))
-      .map((component): Node => ({
-        id: component.id,
-        type: 'component',
-        position: getComponentPosition(component, currentSystemView),
-        data: { component },
-        draggable: true,
-      }));
+      .map((component): Node => {
+        const baseNode = {
+          id: component.id,
+          type: 'component' as const,
+          position: getComponentPosition(component, currentSystemView),
+          data: { component },
+          draggable: true,
+        };
+
+        // Add parent-child properties only if component has a parent
+        if (component.parentId) {
+          return {
+            ...baseNode,
+            parentId: component.parentId,
+            extent: 'parent' as const,
+            expandParent: true,
+          };
+        }
+
+        return baseNode;
+      });
   }, [migratedProject, currentSystemView]);
 
   // Convert project connections to ReactFlow edges
@@ -231,7 +270,7 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
     setEdges(edges);
   }, [edges, setEdges]);
 
-    // Handle component position changes
+  // Handle component position changes
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     if (!migratedProject || !currentSystemView) return;
     
@@ -556,29 +595,10 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
 
 export default function SystemEditor() {
   const [currentProjectId] = useCurrentProjectId();
-
   if (!currentProjectId) {
-    return (
-      <div style={{ 
-        height: '70vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        background: '#f9fafb',
-        border: '2px dashed #d1d5db',
-        borderRadius: '8px'
-      }}>
-        <div style={{ textAlign: 'center', color: '#6b7280' }}>
-          <div style={{ fontSize: '18px', marginBottom: '8px' }}>
-            No Project Selected
-          </div>
-          <div style={{ fontSize: '14px' }}>
-            Create or select a project to start system modeling
-          </div>
-        </div>
-      </div>
-    );
+    return <NoProjectSelected />;
   }
+
 
   return (
     <div style={{ height: '70vh' }}>
