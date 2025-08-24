@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
-import { useProjects, useCurrentProjectId, createNewProject, createCarTemplate } from '@/lib/storage';
+import { useProjects, useCurrentProjectId, createNewProject } from '@/lib/storage';
+import { getTemplateById } from '@/lib/templates';
 import ProjectManager from '@/components/project_manager';
 import LandingPage from '@/components/landing_page';
 
@@ -22,7 +23,7 @@ export default function Home() {
    */
   const isCreatingRef = useRef(false);
 
-  const handleCreateProject = useCallback((name: string, description?: string, useTemplate?: boolean) => {
+  const handleCreateProject = useCallback((name: string, description?: string, templateId?: string) => {
     // GUARD: Prevent duplicate calls from React StrictMode or rapid user clicks
     if (isCreatingRef.current) {
       return;
@@ -30,8 +31,9 @@ export default function Home() {
     
     isCreatingRef.current = true;
     
-    const newProject = useTemplate 
-      ? createCarTemplate(name, description)
+    const template = templateId ? getTemplateById(templateId) : null;
+    const newProject = template 
+      ? template.createProject(name, description)
       : createNewProject(name, description);
     
     /**

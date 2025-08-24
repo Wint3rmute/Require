@@ -27,8 +27,10 @@ import {
   Grid,
   Chip,
   IconButton,
-  FormControlLabel,
-  Checkbox,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -39,11 +41,11 @@ import {
   useProjects,
   useCurrentProjectId,
   createNewProject,
-  createCarTemplate,
   calculateProjectCompleteness,
   findOrphanedComponents,
   getCompatibilityIssues
 } from '@/lib/storage';
+import { getAllTemplates, getTemplateById } from '@/lib/templates';
 import { Project } from '@/lib/models';
 
 interface ProjectCardProps {
@@ -148,7 +150,7 @@ function ProjectCard({ project, isSelected, onSelect, onDelete, onEdit }: Projec
 export interface CreateProjectDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (name: string, description?: string, useTemplate?: boolean) => void;
+  onSubmit: (name: string, description?: string, templateId?: string) => void;
 }
 
 interface EditProjectDialogProps {
@@ -162,17 +164,20 @@ interface EditProjectDialogProps {
 export function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [useTemplate, setUseTemplate] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const availableTemplates = getAllTemplates();
 
   const handleSubmit = () => {
     if (name.trim()) {
-      onSubmit(name.trim(), description.trim() || undefined, useTemplate);
+      onSubmit(name.trim(), description.trim() || undefined, selectedTemplateId || undefined);
       setName('');
       setDescription('');
-      setUseTemplate(false);
+      setSelectedTemplateId('');
       onClose();
     }
   };
+
+  const selectedTemplate = selectedTemplateId ? getTemplateById(selectedTemplateId) : null;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -200,22 +205,27 @@ export function CreateProjectDialog({ open, onClose, onSubmit }: CreateProjectDi
           sx={{ mb: 2 }}
         />
         
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={useTemplate}
-              onChange={(e) => setUseTemplate(e.target.checked)}
-            />
-          }
-          label="Use Car Template"
-          sx={{ mb: 1 }}
-        />
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel>Use Template (Optional)</InputLabel>
+          <Select
+            value={selectedTemplateId}
+            label="Use Template (Optional)"
+            onChange={(e) => setSelectedTemplateId(e.target.value)}
+          >
+            <MenuItem value="">
+              <em>None - Create Empty Project</em>
+            </MenuItem>
+            {availableTemplates.map((template) => (
+              <MenuItem key={template.id} value={template.id}>
+                {template.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         
-        {useTemplate && (
+        {selectedTemplate && (
           <Alert severity="info" sx={{ mt: 1 }}>
-            Creates a project with automotive components including Engine, Transmission, 
-            Electrical System, Braking, Steering, Infotainment, and Body Control modules 
-            to help you explore the system modeling features.
+            {selectedTemplate.description}
           </Alert>
         )}
       </DialogContent>
@@ -296,9 +306,10 @@ export default function ProjectManager() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
 
-  const handleCreateProject = (name: string, description?: string, useTemplate?: boolean) => {
-    const newProject = useTemplate 
-      ? createCarTemplate(name, description)
+  const handleCreateProject = (name: string, description?: string, templateId?: string) => {
+    const template = templateId ? getTemplateById(templateId) : null;
+    const newProject = template 
+      ? template.createProject(name, description)
       : createNewProject(name, description);
     setProjects(prevProjects => [...prevProjects, newProject]);
     setCurrentProjectId(newProject.id);
