@@ -18,7 +18,6 @@ export interface Component {
   description?: string;
   type: 'system' | 'component'; // 'system' = root only, 'component' = everything else
   parentId?: string; // For hierarchical nesting
-  position: { x: number; y: number }; // Required for ReactFlow
   interfaces: ComponentInterface[]; // Interfaces this component has
 }
 
@@ -48,7 +47,24 @@ export interface Project {
   description?: string;
   components: Component[];
   connections: Connection[];
+  systemViews: SystemView[];
+  activeSystemViewId?: string;
   // Use existing global interfaces from localStorage
+}
+
+// ========================================
+// System Views for Multiple Perspectives
+// ========================================
+
+export interface SystemView {
+  id: string;
+  name: string;
+  description?: string;
+  projectId: string;
+  componentPositions: Record<string, { x: number; y: number }>; // componentId -> position
+  visibleComponentIds: string[]; // Which components to show
+  visibleInterfaceIds: string[]; // Which interfaces to show (optional - can show all if empty)
+  isDefault: boolean; // One default view per project
 }
 
 // ========================================
@@ -93,4 +109,61 @@ export function checkInterfaceCompatibility(
 // Helper to generate unique IDs
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// ========================================
+// SystemView Helper Functions
+// ========================================
+
+/**
+ * Create a default "All Components" system view for a project
+ */
+export function createDefaultSystemView(projectId: string, components: Component[]): SystemView {
+  const componentPositions: Record<string, { x: number; y: number }> = {};
+  
+  // Auto-layout components in a grid pattern
+  components.forEach((component, index) => {
+    const cols = Math.ceil(Math.sqrt(components.length));
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+    componentPositions[component.id] = {
+      x: 100 + col * 250,
+      y: 100 + row * 150
+    };
+  });
+
+  return {
+    id: generateId(),
+    name: 'All Components',
+    description: 'Complete system overview showing all components',
+    projectId,
+    componentPositions,
+    visibleComponentIds: components.map(c => c.id),
+    visibleInterfaceIds: [], // Empty means show all interfaces
+    isDefault: true
+  };
+}
+
+/**
+ * Get component position from a system view, with fallback to default
+ */
+export function getComponentPosition(systemView: SystemView, componentId: string): { x: number; y: number } {
+  return systemView.componentPositions[componentId] || { x: 100, y: 100 };
+}
+
+/**
+ * Update component position in a system view
+ */
+export function updateComponentPositionInView(
+  systemView: SystemView,
+  componentId: string,
+  position: { x: number; y: number }
+): SystemView {
+  return {
+    ...systemView,
+    componentPositions: {
+      ...systemView.componentPositions,
+      [componentId]: position
+    }
+  };
 }

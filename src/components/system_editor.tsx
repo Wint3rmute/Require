@@ -20,12 +20,14 @@ import { Handle, Position, NodeResizer } from '@xyflow/react';
 import { 
   useCurrentProjectId, 
   useProject, 
-  addComponentToProject,
+  addComponentToProjectWithPosition,
   createConnection,
   generateId,
+  getActiveSystemView,
+  updateSystemViewInProject,
   DEFAULT_COMPONENT_SIZE
 } from '@/lib/storage';
-import { Component } from '@/lib/models';
+import { Component, getComponentPosition, updateComponentPositionInView } from '@/lib/models';
 
 // ========================================
 // Custom Node Components
@@ -165,11 +167,21 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
   const nodes = useMemo(() => {
     if (!project) return [];
     
-    return project.components.map((component): Node => {
+    const activeSystemView = getActiveSystemView(project);
+    if (!activeSystemView) return [];
+    
+    // Only show components that are visible in the current system view
+    const visibleComponents = project.components.filter(component => 
+      activeSystemView.visibleComponentIds.includes(component.id)
+    );
+    
+    return visibleComponents.map((component): Node => {
+      const position = getComponentPosition(activeSystemView, component.id);
+      
       const baseNode = {
         id: component.id,
         type: 'component' as const,
-        position: component.position,
+        position,
         data: { component },
         draggable: true,
       };
@@ -232,10 +244,36 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
     
     onNodesChange(changes);
     
-    // Note: Position updates could be implemented here when dragging ends
-    // Currently just handling the visual changes in ReactFlow
+    // Handle position updates when dragging ends
+    const positionChanges = changes.filter(change => 
+      change.type === 'position' && 'position' in change && change.position && !change.dragging
+    );
     
-  }, [project, onNodesChange]);
+    if (positionChanges.length > 0) {
+      const activeSystemView = getActiveSystemView(project);
+      if (!activeSystemView) return;
+      
+      let updatedSystemView = activeSystemView;
+      
+      positionChanges.forEach(change => {
+        if ('position' in change && change.position) {
+          updatedSystemView = updateComponentPositionInView(
+            updatedSystemView,
+            change.id,
+            change.position
+          );
+        }
+      });
+      
+      const updatedProject = updateSystemViewInProject(
+        project,
+        updatedSystemView.id,
+        updatedSystemView
+      );
+      
+      updateProject(updatedProject);
+    }
+  }, [project, onNodesChange, updateProject]);
 
   // Handle new connections
   const onConnect = useCallback((connection: Connection) => {
@@ -280,11 +318,10 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
     });
 
     // Create new component with the dropped interface
-    const updatedProject = addComponentToProject(project, {
+    const updatedProject = addComponentToProjectWithPosition(project, {
       name: `New ${interfaceName} Component`,
       description: `Component with ${interfaceName} interface`,
       type: 'component',
-      position,
       interfaces: [{
         id: generateId(),
         componentId: '', // Will be set by addComponentToProject
@@ -293,7 +330,7 @@ function SystemEditorFlow({ projectId }: SystemEditorFlowProps) {
         position: 'right',
         isConnected: false
       }]
-    });
+    }, position);
 
     updateProject(updatedProject);
   }, [project, updateProject, screenToFlowPosition]);

@@ -14,8 +14,10 @@ import {
   Component, 
   Connection, 
   Interface,
+  SystemView,
   generateId,
-  checkInterfaceCompatibility
+  checkInterfaceCompatibility,
+  createDefaultSystemView
 } from './models';
 import { createCarTemplate } from './car_template';
 
@@ -100,15 +102,19 @@ export function createNewProject(name: string, description?: string): Project {
     name: `${name} System`,
     description: `Root system for ${name}`,
     type: 'system',
-    position: { x: 100, y: 100 },
     interfaces: []
   };
+  
+  const components = [rootSystem];
+  const defaultSystemView = createDefaultSystemView(projectId, components);
   
   const project: Project = {
     id: projectId,
     name,
-    components: [rootSystem],
-    connections: []
+    components,
+    connections: [],
+    systemViews: [defaultSystemView],
+    activeSystemViewId: defaultSystemView.id
   };
   
   if (description) {
@@ -136,6 +142,42 @@ export function addComponentToProject(
     ...project,
     components: [...project.components, newComponent]
   };
+}
+
+/**
+ * Add a component to a project and position it in the active system view
+ */
+export function addComponentToProjectWithPosition(
+  project: Project,
+  component: Omit<Component, 'id'>,
+  position: { x: number; y: number }
+): Project {
+  const newComponent: Component = {
+    ...component,
+    id: generateId()
+  };
+
+  const updatedProject = {
+    ...project,
+    components: [...project.components, newComponent]
+  };
+
+  // Add component to active system view
+  const activeSystemView = getActiveSystemView(updatedProject);
+  if (activeSystemView) {
+    const updatedSystemView = {
+      ...activeSystemView,
+      visibleComponentIds: [...activeSystemView.visibleComponentIds, newComponent.id],
+      componentPositions: {
+        ...activeSystemView.componentPositions,
+        [newComponent.id]: position
+      }
+    };
+    
+    return updateSystemViewInProject(updatedProject, activeSystemView.id, updatedSystemView);
+  }
+
+  return updatedProject;
 }
 
 /**
@@ -328,6 +370,113 @@ export function getCompatibilityIssues(project: Project): Array<{
 }
 
 // ========================================
+// SystemView Management Functions
+// ========================================
+
+/**
+ * Add a new system view to a project
+ */
+export function addSystemViewToProject(
+  project: Project,
+  systemView: Omit<SystemView, 'id' | 'projectId'>
+): Project {
+  const newSystemView: SystemView = {
+    ...systemView,
+    id: generateId(),
+    projectId: project.id
+  };
+
+  return {
+    ...project,
+    systemViews: [...project.systemViews, newSystemView]
+  };
+}
+
+/**
+ * Update a system view in a project
+ */
+export function updateSystemViewInProject(
+  project: Project,
+  systemViewId: string,
+  updates: Partial<SystemView>
+): Project {
+  return {
+    ...project,
+    systemViews: project.systemViews.map(sv =>
+      sv.id === systemViewId ? { ...sv, ...updates } : sv
+    )
+  };
+}
+
+/**
+ * Remove a system view from a project (cannot remove default view)
+ */
+export function removeSystemViewFromProject(
+  project: Project,
+  systemViewId: string
+): Project {
+  const systemViewToRemove = project.systemViews.find(sv => sv.id === systemViewId);
+  
+  // Cannot remove default view
+  if (systemViewToRemove?.isDefault) {
+    console.warn('Cannot remove default system view');
+    return project;
+  }
+
+  const updatedSystemViews = project.systemViews.filter(sv => sv.id !== systemViewId);
+  
+  // If we're removing the active view, switch to default
+  let newActiveViewId = project.activeSystemViewId;
+  if (project.activeSystemViewId === systemViewId) {
+    const defaultView = updatedSystemViews.find(sv => sv.isDefault);
+    newActiveViewId = defaultView?.id || undefined;
+  }
+
+  const result: Project = {
+    ...project,
+    systemViews: updatedSystemViews
+  };
+  
+  if (newActiveViewId !== undefined) {
+    result.activeSystemViewId = newActiveViewId;
+  }
+
+  return result;
+}
+
+/**
+ * Get the active system view for a project
+ */
+export function getActiveSystemView(project: Project): SystemView | null {
+  if (project.activeSystemViewId) {
+    const activeView = project.systemViews.find(sv => sv.id === project.activeSystemViewId);
+    if (activeView) return activeView;
+  }
+  
+  // Fallback to default view
+  return project.systemViews.find(sv => sv.isDefault) || null;
+}
+
+/**
+ * Set the active system view for a project
+ */
+export function setActiveSystemView(
+  project: Project,
+  systemViewId: string
+): Project {
+  const systemView = project.systemViews.find(sv => sv.id === systemViewId);
+  if (!systemView) {
+    console.warn('System view not found:', systemViewId);
+    return project;
+  }
+
+  return {
+    ...project,
+    activeSystemViewId: systemViewId
+  };
+}
+
+// ========================================
 // Data Migration & Validation
 // ========================================
 
@@ -349,25 +498,64 @@ export function validateAndMigrateProject(projectData: unknown): Project | null 
       return null;
     }
     
-    // Ensure all components have required fields
+    // Ensure all components have required fields and migrate position data
     const validatedComponents = (data.components as unknown[]).map((comp: unknown) => {
       const component = comp as Record<string, unknown>;
+      
+      // Remove position from component - it will be migrated to SystemView
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { position: _position, ...componentWithoutPosition } = component;
+      
       return {
         id: component.id || generateId(),
         name: component.name || 'Unnamed Component',
         type: component.type || 'component',
-        position: component.position || { x: 0, y: 0 },
         interfaces: component.interfaces || [],
-        ...component
+        ...componentWithoutPosition
       } as Component;
     });
+    
+    // Migration: Check if project already has SystemViews
+    let systemViews = (data.systemViews as SystemView[]) || [];
+    let activeSystemViewId = data.activeSystemViewId as string | undefined;
+    
+    // If no SystemViews exist, create a default one with migrated positions
+    if (systemViews.length === 0) {
+      const componentPositions: Record<string, { x: number; y: number }> = {};
+      
+      // Extract positions from original components data
+      (data.components as unknown[]).forEach((comp: unknown) => {
+        const component = comp as Record<string, unknown>;
+        if (component.id && component.position) {
+          componentPositions[component.id as string] = component.position as { x: number; y: number };
+        }
+      });
+      
+      const defaultSystemView = createDefaultSystemView(
+        data.id as string,
+        validatedComponents
+      );
+      
+      // Use migrated positions if available
+      if (Object.keys(componentPositions).length > 0) {
+        defaultSystemView.componentPositions = componentPositions;
+      }
+      
+      systemViews = [defaultSystemView];
+      activeSystemViewId = defaultSystemView.id;
+    }
     
     const project: Project = {
       id: data.id as string,
       name: data.name as string,
       components: validatedComponents,
-      connections: (data.connections as Connection[]) || []
+      connections: (data.connections as Connection[]) || [],
+      systemViews
     };
+    
+    if (activeSystemViewId) {
+      project.activeSystemViewId = activeSystemViewId;
+    }
     
     if (data.description && typeof data.description === 'string') {
       project.description = data.description;
@@ -395,11 +583,19 @@ export const RequireStorage = {
   createNewProject,
   createCarTemplate,
   addComponentToProject,
+  addComponentToProjectWithPosition,
   updateComponentInProject,
   removeComponentFromProject,
   addInterfaceToComponent,
   createConnection,
   removeConnection,
+  
+  // SystemView operations
+  addSystemViewToProject,
+  updateSystemViewInProject,
+  removeSystemViewFromProject,
+  getActiveSystemView,
+  setActiveSystemView,
   
   // Analysis
   calculateProjectCompleteness,

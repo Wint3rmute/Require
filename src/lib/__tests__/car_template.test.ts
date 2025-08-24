@@ -82,12 +82,33 @@ describe('createCarTemplate', () => {
       });
     });
 
-    it('should assign proper positions to all components', () => {
+    it('should assign proper positions to all components in the default system view', () => {
+      expect(project.systemViews).toBeDefined();
+      expect(project.systemViews.length).toBeGreaterThan(0);
+      
+      const defaultSystemView = project.systemViews.find(sv => sv.isDefault);
+      expect(defaultSystemView).toBeDefined();
+      
       project.components.forEach(component => {
-        expect(component.position).toBeDefined();
-        expect(component.position.x).toBeGreaterThanOrEqual(0);
-        expect(component.position.y).toBeGreaterThanOrEqual(0);
+        const position = defaultSystemView?.componentPositions[component.id];
+        expect(position).toBeDefined();
+        expect(position?.x).toBeGreaterThanOrEqual(0);
+        expect(position?.y).toBeGreaterThanOrEqual(0);
       });
+    });
+
+    it('should create a default system view with proper structure', () => {
+      expect(project.systemViews).toBeDefined();
+      expect(project.systemViews.length).toBe(1);
+      
+      const defaultSystemView = project.systemViews[0];
+      expect(defaultSystemView.isDefault).toBe(true);
+      expect(defaultSystemView.name).toBe('All Components');
+      expect(defaultSystemView.projectId).toBe(project.id);
+      expect(defaultSystemView.visibleComponentIds).toEqual(project.components.map(c => c.id));
+      expect(defaultSystemView.visibleInterfaceIds).toEqual([]); // Empty means show all
+      
+      expect(project.activeSystemViewId).toBe(defaultSystemView.id);
     });
 
     it('should assign unique IDs to all components', () => {

@@ -180,7 +180,6 @@ const TreeEditorPage = () => {
         <ComponentForm 
           onSubmit={handleAddComponent}
           onCancel={() => setShowAddDialog(false)}
-          defaultPosition={{ x: 0, y: 0 }}
           availableParents={project?.components || []}
         />
       </Dialog>

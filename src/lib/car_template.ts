@@ -6,7 +6,7 @@
  * and interfaces for demonstration and testing purposes.
  */
 
-import { Project, Component, generateId } from './models';
+import { Project, Component, generateId, createDefaultSystemView } from './models';
 
 /**
  * Create a car template project with automotive components
@@ -20,7 +20,6 @@ export function createCarTemplate(name: string, description?: string): Project {
     name: `${name} System`,
     description: description || 'Complete automotive system breakdown',
     type: 'system',
-    position: { x: 100, y: 100 },
     interfaces: []
   };
 
@@ -30,7 +29,6 @@ export function createCarTemplate(name: string, description?: string): Project {
     description: 'Internal combustion engine with fuel injection and ignition systems',
     type: 'component',
     parentId: rootSystem.id,
-    position: { x: 150, y: 200 },
     interfaces: [
       {
         id: generateId(),
@@ -57,7 +55,6 @@ export function createCarTemplate(name: string, description?: string): Project {
     description: 'Automatic transmission system with electronic control',
     type: 'component', 
     parentId: rootSystem.id,
-    position: { x: 400, y: 200 },
     interfaces: [
       {
         id: generateId(),
@@ -76,7 +73,6 @@ export function createCarTemplate(name: string, description?: string): Project {
     description: 'Main electrical distribution, battery management, and charging system',
     type: 'component',
     parentId: rootSystem.id,
-    position: { x: 150, y: 350 },
     interfaces: [
       {
         id: generateId(),
@@ -103,7 +99,6 @@ export function createCarTemplate(name: string, description?: string): Project {
     description: 'Anti-lock braking system (ABS) with electronic brake distribution',
     type: 'component',
     parentId: rootSystem.id,
-    position: { x: 400, y: 350 },
     interfaces: [
       {
         id: generateId(),
@@ -122,7 +117,6 @@ export function createCarTemplate(name: string, description?: string): Project {
     description: 'Electronic power steering with lane keeping assistance',
     type: 'component',
     parentId: rootSystem.id,
-    position: { x: 650, y: 200 },
     interfaces: [
       {
         id: generateId(),
@@ -141,7 +135,6 @@ export function createCarTemplate(name: string, description?: string): Project {
     description: 'Multimedia system with navigation, connectivity, and user interface',
     type: 'component',
     parentId: rootSystem.id,
-    position: { x: 650, y: 350 },
     interfaces: [
       {
         id: generateId(),
@@ -176,7 +169,6 @@ export function createCarTemplate(name: string, description?: string): Project {
     description: 'Controls lighting, windows, locks, and other body electronics',
     type: 'component',
     parentId: rootSystem.id,
-    position: { x: 900, y: 275 },
     interfaces: [
       {
         id: generateId(),
@@ -197,11 +189,28 @@ export function createCarTemplate(name: string, description?: string): Project {
     });
   });
 
+  // Create SystemView with proper component positions
+  const defaultSystemView = createDefaultSystemView(projectId, components);
+  
+  // Override with more thoughtful automotive layout
+  defaultSystemView.componentPositions = {
+    [rootSystem.id]: { x: 100, y: 100 },
+    [engineSubsystem.id]: { x: 150, y: 200 },
+    [transmissionSubsystem.id]: { x: 400, y: 200 },
+    [electricalSystem.id]: { x: 150, y: 350 },
+    [brakingSystem.id]: { x: 400, y: 350 },
+    [steeringSystem.id]: { x: 650, y: 200 },
+    [infotainmentSystem.id]: { x: 650, y: 350 },
+    [bodyControlModule.id]: { x: 900, y: 275 }
+  };
+
   const project: Project = {
     id: projectId,
     name,
     components,
-    connections: []
+    connections: [],
+    systemViews: [defaultSystemView],
+    activeSystemViewId: defaultSystemView.id
   };
   
   if (description) {
