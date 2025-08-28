@@ -36,6 +36,7 @@ export default function ButtonAppBar() {
 
   const navigationLinks = [
     { name: 'Component Tree', href: '/tree-editor' },
+    { name: 'Mermaid Diagram', href: '/mermaid-diagram' },
     { name: 'Interfaces', href: '/interfaces' },
     { name: 'System Model', href: '/system-model' },
     { name: 'Login', href: '#' }
@@ -85,6 +86,9 @@ export default function ButtonAppBar() {
             <>
               <Button color="inherit" component={Link} href="/tree-editor">
                 Component Tree
+              </Button>
+              <Button color="inherit" component={Link} href="/mermaid-diagram">
+                Mermaid Diagram
               </Button>
               <Button color="inherit" component={Link} href="/interfaces">
                 Interfaces
